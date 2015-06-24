@@ -1778,7 +1778,7 @@ PHPAPI PHP_FUNCTION(fread)
 	}
 
 	ZVAL_NEW_STR(return_value, zend_string_alloc(len, 0));
-	Z_STRLEN_P(return_value) = php_stream_read(stream, Z_STRVAL_P(return_value), len);
+	ZVAL_STRLEN(return_value, php_stream_read(stream, Z_STRVAL_P(return_value), len));
 
 	/* needed because recv/read/gzread doesnt put a null at the end*/
 	Z_STRVAL_P(return_value)[Z_STRLEN_P(return_value)] = 0;

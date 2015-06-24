@@ -1289,14 +1289,14 @@ ZEND_API int _object_and_properties_init(zval *arg, zend_class_entry *class_type
 			zend_error(E_EXCEPTION | E_ERROR, "Cannot instantiate abstract class %s", class_type->name->val);
 		}
 		ZVAL_NULL(arg);
-		Z_OBJ_P(arg) = NULL;
+		_Z_OBJ_P(arg) = NULL;
 		return FAILURE;
 	}
 
 	if (UNEXPECTED(!(class_type->ce_flags & ZEND_ACC_CONSTANTS_UPDATED))) {
 		if (UNEXPECTED(zend_update_class_constants(class_type) != SUCCESS)) {
 			ZVAL_NULL(arg);
-			Z_OBJ_P(arg) = NULL;
+			_Z_OBJ_P(arg) = NULL;
 			return FAILURE;
 		}
 	}

@@ -376,9 +376,9 @@ static int lookup_cv(zend_op_array *op_array, zend_string* name) /* {{{ */{
 
 	while (i < op_array->last_var) {
 		if (op_array->vars[i]->val == name->val ||
-		    (op_array->vars[i]->h == hash_value &&
-		     op_array->vars[i]->len == name->len &&
-		     memcmp(op_array->vars[i]->val, name->val, name->len) == 0)) {
+		    (zend_string_hash_val(op_array->vars[i]) == hash_value &&
+		     ZSTR_LEN(op_array->vars[i]) == ZSTR_LEN(name) &&
+		     memcmp(ZSTR_VAL(op_array->vars[i]), ZSTR_VAL(name), ZSTR_LEN(name)) == 0)) {
 			zend_string_release(name);
 			return (int)(zend_intptr_t)ZEND_CALL_VAR_NUM(NULL, i);
 		}
@@ -412,9 +412,9 @@ static inline void zend_insert_literal(zend_op_array *op_array, zval *zv, int li
 {
 	if (Z_TYPE_P(zv) == IS_STRING || Z_TYPE_P(zv) == IS_CONSTANT) {
 		zend_string_hash_val(Z_STR_P(zv));
-		Z_STR_P(zv) = zend_new_interned_string(Z_STR_P(zv));
+		_Z_STR_P(zv) = zend_new_interned_string(Z_STR_P(zv));
 		if (IS_INTERNED(Z_STR_P(zv))) {
-			Z_TYPE_FLAGS_P(zv) &= ~ (IS_TYPE_REFCOUNTED | IS_TYPE_COPYABLE);
+			zval_set_type_flags(zv, Z_TYPE_FLAGS_P(zv) & (~ (IS_TYPE_REFCOUNTED | IS_TYPE_COPYABLE)));
 		}
 	}
 	ZVAL_COPY_VALUE(CT_CONSTANT_EX(op_array, literal_position), zv);
@@ -4443,7 +4443,7 @@ void zend_compile_closure_uses(zend_ast *ast) /* {{{ */
 		}
 
 		ZVAL_NULL(&zv);
-		Z_CONST_FLAGS(zv) = by_ref ? IS_LEXICAL_REF : IS_LEXICAL_VAR;
+		zval_set_const_flags(&zv, by_ref ? IS_LEXICAL_REF : IS_LEXICAL_VAR);
 
 		zend_compile_static_var_common(var_ast, &zv, by_ref);
 	}
@@ -6720,11 +6720,11 @@ void zend_compile_const_expr_class_const(zend_ast **ast_ptr) /* {{{ */
 		zend_string_addref(class_name);
 	}
 
-	Z_STR(result) = zend_concat3(
+	_Z_STR(result) = zend_concat3(
 		class_name->val, class_name->len, "::", 2, const_name->val, const_name->len);
 
 	Z_TYPE_INFO(result) = IS_CONSTANT_EX;
-	Z_CONST_FLAGS(result) = fetch_type;
+	zval_set_const_flags(&result, fetch_type);
 
 	zend_ast_destroy(ast);
 	zend_string_release(class_name);
@@ -6753,7 +6753,7 @@ void zend_compile_const_expr_const(zend_ast **ast_ptr) /* {{{ */
 
 	Z_TYPE_INFO(resolved_name) = IS_CONSTANT_EX;
 	if (!is_fully_qualified) {
-		Z_CONST_FLAGS(resolved_name) = IS_CONSTANT_UNQUALIFIED;
+		zval_set_const_flags(&resolved_name, IS_CONSTANT_UNQUALIFIED);
 	}
 
 	zend_ast_destroy(ast);
@@ -6772,7 +6772,7 @@ void zend_compile_const_expr_magic_const(zend_ast **ast_ptr) /* {{{ */
 
 	{
 		zval const_zv;
-		Z_STR(const_zv) = zend_string_init("__CLASS__", sizeof("__CLASS__")-1, 0);
+		_Z_STR(const_zv) = zend_string_init("__CLASS__", sizeof("__CLASS__")-1, 0);
 		Z_TYPE_INFO(const_zv) = IS_CONSTANT_EX | (IS_CONSTANT_CLASS << Z_CONST_FLAGS_SHIFT);
 
 		zend_ast_destroy(ast);

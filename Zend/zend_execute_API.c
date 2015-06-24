@@ -571,14 +571,14 @@ ZEND_API int zval_update_constant_ex(zval *p, zend_bool inline_change, zend_clas
 					actual_len -= (actual - Z_STRVAL_P(p));
 					if (inline_change) {
 						zend_string *s = zend_string_init(actual, actual_len, 0);
-						Z_STR_P(p) = s;
-						Z_TYPE_FLAGS_P(p) = IS_TYPE_REFCOUNTED | IS_TYPE_COPYABLE;
+						_Z_STR_P(p) = s;
+						zval_set_type_flags(p, IS_TYPE_REFCOUNTED | IS_TYPE_COPYABLE);
 					}
 				}
 				if (actual[0] == '\\') {
 					if (inline_change) {
 						memmove(Z_STRVAL_P(p), Z_STRVAL_P(p)+1, Z_STRLEN_P(p));
-						--Z_STRLEN_P(p);
+						ZVAL_DEC_STRLEN(p);
 					} else {
 						++actual;
 					}
@@ -825,7 +825,7 @@ int zend_call_function(zend_fcall_info *fci, zend_fcall_info_cache *fci_cache) /
 	if (func->common.fn_flags & ZEND_ACC_STATIC) {
 		fci->object = NULL;
 	}
-	Z_OBJ(call->This) = fci->object;
+	_Z_OBJ(call->This) = fci->object;
 
 	if (func->type == ZEND_USER_FUNCTION) {
 		int call_via_handler = (func->common.fn_flags & ZEND_ACC_CALL_VIA_TRAMPOLINE) != 0;
@@ -1586,9 +1586,9 @@ ZEND_API int zend_set_local_var(zend_string *name, zval *value, int force) /* {{
 				zend_string **end = str + op_array->last_var;
 
 				do {
-					if ((*str)->h == h &&
-					    (*str)->len == name->len &&
-					    memcmp((*str)->val, name->val, name->len) == 0) {
+					if (_zend_string_get_hash_elt(*str) == h &&
+					    ZSTR_LEN(*str) == ZSTR_LEN(name) &&
+					    memcmp(ZSTR_VAL(*str), ZSTR_VAL(name), ZSTR_LEN(name)) == 0) {
 						zval *var = EX_VAR_NUM(str - op_array->vars);
 						ZVAL_COPY_VALUE(var, value);
 						return SUCCESS;
@@ -1627,9 +1627,9 @@ ZEND_API int zend_set_local_var_str(const char *name, size_t len, zval *value, i
 				zend_string **end = str + op_array->last_var;
 
 				do {
-					if ((*str)->h == h &&
-					    (*str)->len == len &&
-					    memcmp((*str)->val, name, len) == 0) {
+					if (_zend_string_get_hash_elt(*str) == h &&
+					    ZSTR_LEN(*str) == len &&
+					    memcmp(ZSTR_VAL(*str), name, len) == 0) {
 						zval *var = EX_VAR_NUM(str - op_array->vars);
 						zval_ptr_dtor(var);
 						ZVAL_COPY_VALUE(var, value);

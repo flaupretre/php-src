@@ -2383,21 +2383,21 @@ static void make_persistent_restriction_int(void *data)
 }
 
 
-static void make_persistent_restriction_char_int(sdlRestrictionCharPtr *rest)
+static sdlRestrictionCharPtr make_persistent_restriction_char_int(sdlRestrictionCharPtr rest)
 {
 	sdlRestrictionCharPtr prest = NULL;
 
 	prest = malloc(sizeof(sdlRestrictionChar));
 	memset(prest, 0, sizeof(sdlRestrictionChar));
-	prest->value = strdup((*rest)->value);
-	prest->fixed = (*rest)->fixed;
-	*rest = prest;
+	prest->value = strdup(rest->value);
+	prest->fixed = rest->fixed;
+	return prest;
 }
 
 
 static void make_persistent_restriction_char(zval *zv)
 {
-	make_persistent_restriction_char_int((sdlRestrictionCharPtr*)&Z_PTR_P(zv));
+	ZVAL_PTR(zv, make_persistent_restriction_char_int((sdlRestrictionCharPtr)Z_PTR_P(zv)));
 }
 
 
@@ -2755,10 +2755,10 @@ static sdlTypePtr make_persistent_sdl_type(sdlTypePtr type, HashTable *ptr_map, 
 			make_persistent_restriction_int(&ptype->restrictions->maxLength);
 		}
 		if (ptype->restrictions->whiteSpace) {
-			make_persistent_restriction_char_int(&ptype->restrictions->whiteSpace);
+			ptype->restrictions->whiteSpace=make_persistent_restriction_char_int(ptype->restrictions->whiteSpace);
 		}
 		if (ptype->restrictions->pattern) {
-			make_persistent_restriction_char_int(&ptype->restrictions->pattern);
+			ptype->restrictions->pattern=make_persistent_restriction_char_int(ptype->restrictions->pattern);
 		}
 
 		if (type->restrictions->enumeration) {
@@ -3086,7 +3086,7 @@ static sdlPtr make_persistent_sdl(sdlPtr sdl)
 				assert(0);
 			}
 			//???
-			Z_PTR_P(zv) = preq;
+			ZVAL_PTR(zv, preq);
 			if (key) {
 				/* We have to duplicate key emalloc->malloc */
 				zend_hash_str_add_ptr(psdl->requests, key->val, key->len, preq);

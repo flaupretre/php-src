@@ -483,9 +483,9 @@ PHPAPI pcre_cache_entry* pcre_get_compiled_regex_cache(zend_string *regex)
 	 * See bug #63180
 	 */
 	if (!IS_INTERNED(regex) || !(GC_FLAGS(regex) & IS_STR_PERMANENT)) {
-		zend_string *str = zend_string_init(regex->val, regex->len, 1);
+		zend_string *str = zend_string_init(ZSTR_VAL(regex), ZSTR_LEN(regex), 1);
 		GC_REFCOUNT(str) = 0; /* will be incremented by zend_hash_update_mem() */
-		str->h = regex->h;
+		zend_string_set_hash_val(str, zend_string_hash_val(regex));
 		regex = str;
 	}
 

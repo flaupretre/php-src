@@ -264,7 +264,7 @@ static zend_always_inline int _zend_handle_numeric_str(const char *key, size_t l
 	_zend_handle_numeric_str(key, length, &idx)
 
 #define ZEND_HANDLE_NUMERIC(key, idx) \
-	ZEND_HANDLE_NUMERIC_STR((key)->val, (key)->len, idx)
+	ZEND_HANDLE_NUMERIC_STR(ZSTR_VAL(key), ZSTR_LEN(key), idx)
 
 
 static zend_always_inline zval *zend_hash_find_ind(const HashTable *ht, zend_string *key)
@@ -542,7 +542,7 @@ static zend_always_inline void *zend_hash_add_mem(HashTable *ht, zend_string *ke
 
 	ZVAL_PTR(&tmp, NULL);
 	if ((zv = zend_hash_add(ht, key, &tmp))) {
-		Z_PTR_P(zv) = pemalloc(size, ht->u.flags & HASH_FLAG_PERSISTENT);
+		_Z_PTR_P(zv) = pemalloc(size, ht->u.flags & HASH_FLAG_PERSISTENT);
 		memcpy(Z_PTR_P(zv), pData, size);
 		return Z_PTR_P(zv);
 	}
@@ -555,7 +555,7 @@ static zend_always_inline void *zend_hash_str_add_mem(HashTable *ht, const char 
 
 	ZVAL_PTR(&tmp, NULL);
 	if ((zv = zend_hash_str_add(ht, str, len, &tmp))) {
-		Z_PTR_P(zv) = pemalloc(size, ht->u.flags & HASH_FLAG_PERSISTENT);
+		_Z_PTR_P(zv) = pemalloc(size, ht->u.flags & HASH_FLAG_PERSISTENT);
 		memcpy(Z_PTR_P(zv), pData, size);
 		return Z_PTR_P(zv);
 	}
@@ -618,7 +618,7 @@ static zend_always_inline void *zend_hash_index_add_mem(HashTable *ht, zend_ulon
 
 	ZVAL_PTR(&tmp, NULL);
 	if ((zv = zend_hash_index_add(ht, h, &tmp))) {
-		Z_PTR_P(zv) = pemalloc(size, ht->u.flags & HASH_FLAG_PERSISTENT);
+		_Z_PTR_P(zv) = pemalloc(size, ht->u.flags & HASH_FLAG_PERSISTENT);
 		memcpy(Z_PTR_P(zv), pData, size);
 		return Z_PTR_P(zv);
 	}
@@ -654,7 +654,7 @@ static zend_always_inline void *zend_hash_next_index_insert_mem(HashTable *ht, v
 
 	ZVAL_PTR(&tmp, NULL);
 	if ((zv = zend_hash_next_index_insert(ht, &tmp))) {
-		Z_PTR_P(zv) = pemalloc(size, ht->u.flags & HASH_FLAG_PERSISTENT);
+		_Z_PTR_P(zv) = pemalloc(size, ht->u.flags & HASH_FLAG_PERSISTENT);
 		memcpy(Z_PTR_P(zv), pData, size);
 		return Z_PTR_P(zv);
 	}
@@ -897,10 +897,9 @@ static zend_always_inline zval *_zend_hash_append(HashTable *ht, zend_string *ke
 	if (!IS_INTERNED(key)) {
 		ht->u.flags &= ~HASH_FLAG_STATIC_KEYS;
 		zend_string_addref(key);
-		zend_string_hash_val(key);		
 	}
 	p->key = key;
-	p->h = key->h;
+	p->h = zend_string_hash_val(key);
 	nIndex = (uint32_t)p->h | ht->nTableMask;
 	Z_NEXT(p->val) = HT_HASH(ht, nIndex);
 	HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(idx);
@@ -919,10 +918,9 @@ static zend_always_inline zval *_zend_hash_append_ptr(HashTable *ht, zend_string
 	if (!IS_INTERNED(key)) {
 		ht->u.flags &= ~HASH_FLAG_STATIC_KEYS;
 		zend_string_addref(key);
-		zend_string_hash_val(key);		
 	}
 	p->key = key;
-	p->h = key->h;
+	p->h = zend_string_hash_val(key);
 	nIndex = (uint32_t)p->h | ht->nTableMask;
 	Z_NEXT(p->val) = HT_HASH(ht, nIndex);
 	HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(idx);
@@ -941,10 +939,9 @@ static zend_always_inline void _zend_hash_append_ind(HashTable *ht, zend_string 
 	if (!IS_INTERNED(key)) {
 		ht->u.flags &= ~HASH_FLAG_STATIC_KEYS;
 		zend_string_addref(key);
-		zend_string_hash_val(key);		
 	}
 	p->key = key;
-	p->h = key->h;
+	p->h = zend_string_hash_val(key);
 	nIndex = (uint32_t)p->h | ht->nTableMask;
 	Z_NEXT(p->val) = HT_HASH(ht, nIndex);
 	HT_HASH(ht, nIndex) = HT_IDX_TO_HASH(idx);

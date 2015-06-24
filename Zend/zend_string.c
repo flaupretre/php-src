@@ -135,7 +135,7 @@ static zend_string *zend_new_interned_string_int(zend_string *str)
 	p = CG(interned_strings).arData + idx;
 	p->h = h;
 	p->key = str;
-	Z_STR(p->val) = str;
+	_Z_STR(p->val) = str;
 	Z_TYPE_INFO(p->val) = IS_INTERNED_STRING_EX;
 	nIndex = h | CG(interned_strings).nTableMask;
 	Z_NEXT(p->val) = HT_HASH(&CG(interned_strings), nIndex);

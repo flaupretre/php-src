@@ -904,17 +904,17 @@ static void zend_optimize_block(zend_code_block *block, zend_op_array *op_array,
 			if (!Z_REFCOUNTED(ZEND_OP1_LITERAL(last_op))) {
 				zend_string *tmp = zend_string_alloc(l, 0);
 				memcpy(tmp->val, Z_STRVAL(ZEND_OP1_LITERAL(last_op)), old_len);
-				Z_STR(ZEND_OP1_LITERAL(last_op)) = tmp;
+				ZVAL_STR(&(ZEND_OP1_LITERAL(last_op)), tmp);
 			} else {
-				Z_STR(ZEND_OP1_LITERAL(last_op)) = zend_string_extend(Z_STR(ZEND_OP1_LITERAL(last_op)), l, 0);
+				ZVAL_STR(&(ZEND_OP1_LITERAL(last_op)), zend_string_extend(Z_STR(ZEND_OP1_LITERAL(last_op)), l, 0));
 			}
 			Z_TYPE_INFO(ZEND_OP1_LITERAL(last_op)) = IS_STRING_EX;
 			memcpy(Z_STRVAL(ZEND_OP1_LITERAL(last_op)) + old_len, Z_STRVAL(ZEND_OP1_LITERAL(opline)), Z_STRLEN(ZEND_OP1_LITERAL(opline)));
 			Z_STRVAL(ZEND_OP1_LITERAL(last_op))[l] = '\0';
 			zval_dtor(&ZEND_OP1_LITERAL(opline));
-			Z_STR(ZEND_OP1_LITERAL(opline)) = zend_new_interned_string(Z_STR(ZEND_OP1_LITERAL(last_op)));
+			ZVAL_STR(&(ZEND_OP1_LITERAL(opline)), zend_new_interned_string(Z_STR(ZEND_OP1_LITERAL(last_op))));
 			if (!Z_REFCOUNTED(ZEND_OP1_LITERAL(opline))) {
-				Z_TYPE_FLAGS(ZEND_OP1_LITERAL(opline)) &= ~ (IS_TYPE_REFCOUNTED | IS_TYPE_COPYABLE);
+				zval_set_type_flags(&(ZEND_OP1_LITERAL(opline)), Z_TYPE_FLAGS(ZEND_OP1_LITERAL(opline)) & (~(IS_TYPE_REFCOUNTED | IS_TYPE_COPYABLE)));
 			}
 			ZVAL_NULL(&ZEND_OP1_LITERAL(last_op));
 			MAKE_NOP(last_op);
@@ -944,17 +944,17 @@ static void zend_optimize_block(zend_code_block *block, zend_op_array *op_array,
 			if (!Z_REFCOUNTED(ZEND_OP2_LITERAL(src))) {
 				zend_string *tmp = zend_string_alloc(l, 0);
 				memcpy(tmp->val, Z_STRVAL(ZEND_OP2_LITERAL(src)), old_len);
-				Z_STR(ZEND_OP2_LITERAL(last_op)) = tmp;
+				ZVAL_STR(&(ZEND_OP2_LITERAL(last_op)), tmp);
 			} else {
-				Z_STR(ZEND_OP2_LITERAL(src)) = zend_string_extend(Z_STR(ZEND_OP2_LITERAL(src)), l, 0);
+				ZVAL_STR(&(ZEND_OP2_LITERAL(src)), zend_string_extend(Z_STR(ZEND_OP2_LITERAL(src)), l, 0));
 			}
 			Z_TYPE_INFO(ZEND_OP2_LITERAL(last_op)) = IS_STRING_EX;
 			memcpy(Z_STRVAL(ZEND_OP2_LITERAL(src)) + old_len, Z_STRVAL(ZEND_OP2_LITERAL(opline)), Z_STRLEN(ZEND_OP2_LITERAL(opline)));
 			Z_STRVAL(ZEND_OP2_LITERAL(src))[l] = '\0';
 			zend_string_release(Z_STR(ZEND_OP2_LITERAL(opline)));
-			Z_STR(ZEND_OP2_LITERAL(opline)) = zend_new_interned_string(Z_STR(ZEND_OP2_LITERAL(src)));
+			ZVAL_STR(&(ZEND_OP2_LITERAL(opline)), zend_new_interned_string(Z_STR(ZEND_OP2_LITERAL(src))));
 			if (!Z_REFCOUNTED(ZEND_OP2_LITERAL(opline))) {
-				Z_TYPE_FLAGS(ZEND_OP2_LITERAL(opline)) &= ~ (IS_TYPE_REFCOUNTED | IS_TYPE_COPYABLE);
+				zval_set_type_flags(&(ZEND_OP2_LITERAL(opline)), Z_TYPE_FLAGS(ZEND_OP2_LITERAL(opline)) & (~(IS_TYPE_REFCOUNTED | IS_TYPE_COPYABLE)));
 			}
 			ZVAL_NULL(&ZEND_OP2_LITERAL(src));
 			MAKE_NOP(src);

@@ -425,9 +425,12 @@ static void php_do_chgrp(INTERNAL_FUNCTION_PARAMETERS, int do_lchgrp) /* {{{ */
 		if(wrapper && wrapper->wops->stream_metadata) {
 			int option;
 			void *value;
+			
 			if (Z_TYPE_P(group) == IS_LONG) {
+				zend_long tmp;
 				option = PHP_STREAM_META_GROUP;
-				value = &Z_LVAL_P(group);
+				tmp=Z_LVAL_P(group);
+				value = &tmp;
 			} else if (Z_TYPE_P(group) == IS_STRING) {
 				option = PHP_STREAM_META_GROUP_NAME;
 				value = Z_STRVAL_P(group);
@@ -563,8 +566,10 @@ static void php_do_chown(INTERNAL_FUNCTION_PARAMETERS, int do_lchown) /* {{{ */
 			int option;
 			void *value;
 			if (Z_TYPE_P(user) == IS_LONG) {
+				zend_long tmp;
 				option = PHP_STREAM_META_OWNER;
-				value = &Z_LVAL_P(user);
+				tmp=Z_LVAL_P(user);
+				value = &tmp;
 			} else if (Z_TYPE_P(user) == IS_STRING) {
 				option = PHP_STREAM_META_OWNER_NAME;
 				value = Z_STRVAL_P(user);

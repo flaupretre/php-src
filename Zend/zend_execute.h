@@ -164,7 +164,7 @@ static zend_always_inline zend_execute_data *zend_vm_stack_push_call_frame_ex(ui
 		ZEND_SET_CALL_INFO(call, call_info);
 	}
 	call->func = func;
-	Z_OBJ(call->This) = object;
+	_Z_OBJ(call->This) = object;
 	ZEND_CALL_NUM_ARGS(call) = num_args;
 	call->called_scope = called_scope;
 	return call;

@@ -988,7 +988,7 @@ static void php_wddx_process_data(void *user_data, const XML_Char *s, int len)
 					zval_ptr_dtor(&ent->data);
 					ZVAL_STRINGL(&ent->data, (char *)s, len);
 				} else {
-					Z_STR(ent->data) = zend_string_extend(Z_STR(ent->data), Z_STRLEN(ent->data) + len, 0);
+					ZVAL_STR(&(ent->data), zend_string_extend(Z_STR(ent->data), Z_STRLEN(ent->data) + len, 0));
 					memcpy(Z_STRVAL(ent->data) + Z_STRLEN(ent->data) - len, (char *)s, len);
 					Z_STRVAL(ent->data)[Z_STRLEN(ent->data)] = '\0';
 				}
@@ -1000,9 +1000,9 @@ static void php_wddx_process_data(void *user_data, const XML_Char *s, int len)
 
 			case ST_BOOLEAN:
 				if (!strcmp((char *)s, "true")) {
-					Z_LVAL(ent->data) = 1;
+					ZVAL_LONG(&(ent->data), 1);
 				} else if (!strcmp((char *)s, "false")) {
-					Z_LVAL(ent->data) = 0;
+					ZVAL_LONG(&(ent->data), 0);
 				} else {
 					stack->top--;
 					zval_ptr_dtor(&ent->data);
@@ -1019,7 +1019,7 @@ static void php_wddx_process_data(void *user_data, const XML_Char *s, int len)
 				memcpy(tmp, (char *)s, len);
 				tmp[len] = '\0';
 
-				Z_LVAL(ent->data) = php_parse_date(tmp, NULL);
+				ZVAL_LONG(&(ent->data), php_parse_date(tmp, NULL));
 				/* date out of range < 1969 or > 2038 */
 				if (Z_LVAL(ent->data) == -1) {
 					ZVAL_STRINGL(&ent->data, (char *)s, len);

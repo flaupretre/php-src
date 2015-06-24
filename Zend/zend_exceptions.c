@@ -184,7 +184,7 @@ static zend_object *zend_default_exception_new_ex(zend_class_entry *class_type, 
 	zend_class_entry *base_ce;
 	zend_string *filename;
 
-	Z_OBJ(obj) = object = zend_objects_new(class_type);
+	ZVAL_OBJ(&obj, object = zend_objects_new(class_type));
 	Z_OBJ_HT(obj) = &default_exception_handlers;
 
 	object_properties_init(object, class_type);

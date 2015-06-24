@@ -1296,7 +1296,7 @@ ZEND_FUNCTION(method_exists)
 
 		if (Z_TYPE_P(klass) == IS_OBJECT
 		&& Z_OBJ_HT_P(klass)->get_method != NULL
-		&& (func = Z_OBJ_HT_P(klass)->get_method(&Z_OBJ_P(klass), method_name, NULL)) != NULL
+		&& (func = Z_OBJ_HT_P(klass)->get_method(&_Z_OBJ_P(klass), method_name, NULL)) != NULL
 		) {
 			if (func->common.fn_flags & ZEND_ACC_CALL_VIA_TRAMPOLINE) {
 				/* Returns true to the fake Closure's __invoke */

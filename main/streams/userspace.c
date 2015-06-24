@@ -940,17 +940,17 @@ static int php_userstreamop_set_option(php_stream *stream, int option, int value
 		ZVAL_LONG(&args[0], 0);
 
 		if (value & LOCK_NB) {
-			Z_LVAL_P(&args[0]) |= PHP_LOCK_NB;
+			ZVAL_LONG(&args[0], Z_LVAL_P(&args[0]) | PHP_LOCK_NB);
 		}
 		switch(value & ~LOCK_NB) {
 		case LOCK_SH:
-			Z_LVAL_P(&args[0]) |= PHP_LOCK_SH;
+			ZVAL_LONG(&args[0], Z_LVAL_P(&args[0]) | PHP_LOCK_SH);
 			break;
 		case LOCK_EX:
-			Z_LVAL_P(&args[0]) |= PHP_LOCK_EX;
+			ZVAL_LONG(&args[0], Z_LVAL_P(&args[0]) | PHP_LOCK_EX);
 			break;
 		case LOCK_UN:
-			Z_LVAL_P(&args[0]) |= PHP_LOCK_UN;
+			ZVAL_LONG(&args[0], Z_LVAL_P(&args[0]) | PHP_LOCK_UN);
 			break;
 		}
 

@@ -527,9 +527,8 @@ add_to_hash:
 	if (!IS_INTERNED(key)) {
 		zend_string_addref(key);
 		ht->u.flags &= ~HASH_FLAG_STATIC_KEYS;
-		zend_string_hash_val(key);
 	}
-	p->h = h = key->h;
+	p->h = h = zend_string_hash_val(key);
 	ZVAL_COPY_VALUE(&p->val, pData);
 	nIndex = h | ht->nTableMask;
 	Z_NEXT(p->val) = HT_HASH(ht, nIndex);

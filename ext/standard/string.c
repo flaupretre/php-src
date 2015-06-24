@@ -3586,7 +3586,7 @@ PHP_FUNCTION(similar_text)
 
 	if (t1->len + t2->len == 0) {
 		if (ac > 2) {
-			Z_DVAL_P(percent) = 0;
+			ZVAL_DOUBLE(percent, 0);
 		}
 
 		RETURN_LONG(0);
@@ -3595,7 +3595,7 @@ PHP_FUNCTION(similar_text)
 	sim = php_similar_char(t1->val, t1->len, t2->val, t2->len);
 
 	if (ac > 2) {
-		Z_DVAL_P(percent) = sim * 200.0 / (t1->len + t2->len);
+		ZVAL_DOUBLE(percent, sim * 200.0 / (t1->len + t2->len));
 	}
 
 	RETURN_LONG(sim);

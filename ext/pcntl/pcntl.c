@@ -659,7 +659,7 @@ PHP_FUNCTION(pcntl_waitpid)
 	}
 #endif
 
-	Z_LVAL_P(z_status) = status;
+	ZVAL_LONG(z_status, status);
 
 	RETURN_LONG((zend_long) child_id);
 }
@@ -711,7 +711,7 @@ PHP_FUNCTION(pcntl_wait)
 		PHP_RUSAGE_TO_ARRAY(rusage, z_rusage);
 	}
 #endif
-	Z_LVAL_P(z_status) = status;
+	ZVAL_LONG(z_status, status);
 
 	RETURN_LONG((zend_long) child_id);
 }

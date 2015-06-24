@@ -159,7 +159,7 @@ static inline void zend_clone_zval(zval *src)
 	if (Z_TYPE_P(src) == IS_REFERENCE) {
 		ptr = accel_xlat_get(Z_REF_P(src));
 		if (ptr != NULL) {
-			Z_REF_P(src) = ptr;
+			ZVAL_REF(src, ptr);
 			return;
 		} else {
 			zend_reference *old = Z_REF_P(src);
@@ -171,7 +171,7 @@ static inline void zend_clone_zval(zval *src)
 	}
 	if (Z_TYPE_P(src) == IS_CONSTANT_AST) {
 		if (Z_REFCOUNT_P(src) > 1 && (ptr = accel_xlat_get(Z_AST_P(src))) != NULL) {
-			Z_AST_P(src) = ptr;
+			_Z_AST_P(src) = ptr;
 		} else {
 			zend_ast_ref *old = Z_AST_P(src);
 
@@ -631,7 +631,7 @@ static void zend_accel_class_hash_copy(HashTable *target, HashTable *source, uni
 		} else {
 			t = _zend_hash_append_ptr(target, p->key, Z_PTR(p->val));
 			if (pCopyConstructor) {
-				pCopyConstructor(&Z_PTR_P(t));
+				pCopyConstructor(&_Z_PTR_P(t));
 			}
 		}
 	}

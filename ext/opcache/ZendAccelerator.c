@@ -366,9 +366,9 @@ zend_string *accel_new_interned_string(zend_string *str)
 	GC_TYPE(p->key) = IS_STRING;
 	GC_FLAGS(p->key) = IS_STR_INTERNED | IS_STR_PERMANENT;
 #endif
-	p->key->h = str->h;
-	p->key->len = str->len;
-	memcpy(p->key->val, str->val, str->len);
+	zend_string_set_hash_val(p->key, zend_string_hash_val(str));
+	zend_string_set_len(p->key, ZSTR_LEN(str));
+	memcpy(ZSTR_VAL(p->key), ZSTR_VAL(str), ZSTR_LEN(str));
 	ZVAL_INTERNED_STR(&p->val, p->key);
 	Z_NEXT(p->val) = HT_HASH(&ZCSG(interned_strings), nIndex);
 	HT_HASH(&ZCSG(interned_strings), nIndex) = HT_IDX_TO_HASH(idx);

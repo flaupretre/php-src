@@ -120,9 +120,9 @@ static void zend_persist_zval_calc(zval *z)
 		case IS_STRING:
 		case IS_CONSTANT:
 			flags = Z_GC_FLAGS_P(z) & ~ (IS_STR_PERSISTENT | IS_STR_INTERNED | IS_STR_PERMANENT);
-			ADD_INTERNED_STRING(Z_STR_P(z), 0);
+			ADD_INTERNED_STRING(_Z_STR_P(z), 0);
 			if (!Z_REFCOUNTED_P(z)) {
-				Z_TYPE_FLAGS_P(z) &= ~ (IS_TYPE_REFCOUNTED | IS_TYPE_COPYABLE);
+				zval_set_type_flags(z, Z_TYPE_FLAGS_P(z) & (~(IS_TYPE_REFCOUNTED | IS_TYPE_COPYABLE)));
 			}
 			Z_GC_FLAGS_P(z) |= flags;
 			break;
@@ -259,7 +259,7 @@ static void zend_persist_op_array_calc(zval *zv)
 	    (!op_array->refcount || *(op_array->refcount) > 1)*/) {
 		zend_op_array *old_op_array = zend_shared_alloc_get_xlat_entry(op_array);
 		if (old_op_array) {
-			Z_PTR_P(zv) = old_op_array;
+			ZVAL_PTR(zv, old_op_array);
 		} else {
 			ADD_ARENA_SIZE(sizeof(zend_op_array));
 			zend_persist_op_array_calc_ex(Z_PTR_P(zv));

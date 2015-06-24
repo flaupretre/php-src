@@ -1020,7 +1020,7 @@ static int do_cli(int argc, char **argv) /* {{{ */
 					}
 					ZVAL_STRINGL(&argn, input, len);
 					zend_hash_str_update(&EG(symbol_table), "argn", sizeof("argn")-1, &argn);
-					Z_LVAL(argi) = ++index;
+					ZVAL_LONG(&argi, ++index);
 					if (exec_run) {
 						if (zend_eval_string_ex(exec_run, NULL, "Command line run code", 1) == FAILURE) {
 							exit_status=254;

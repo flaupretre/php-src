@@ -94,9 +94,11 @@ static void php_pack(zval *val, size_t size, int *map, char *output)
 {
 	int i;
 	char *v;
+	zend_long tmp;
 
 	convert_to_long_ex(val);
-	v = (char *) &Z_LVAL_P(val);
+	tmp = Z_LVAL_P(val);
+	v = (char *) &tmp;
 
 	for (i = 0; i < size; i++) {
 		*output++ = v[map[i]];
@@ -1077,8 +1079,8 @@ PHP_MINIT_FUNCTION(pack)
 	}
 	else {
 		zval val;
-		int size = sizeof(Z_LVAL(val));
-		Z_LVAL(val)=0; /*silence a warning*/
+		int size = sizeof(zend_long);
+		ZVAL_LONG(&val, 0); /*silence a warning*/
 
 		/* Where to get hi to lo bytes from */
 		byte_map[0] = size - 1;

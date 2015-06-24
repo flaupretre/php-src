@@ -135,7 +135,8 @@ static zend_string *spl_object_storage_get_hash(spl_SplObjectStorage *intern, zv
 		}
 	} else {
 		zend_string *hash = zend_string_alloc(sizeof(zend_object*), 0);
-		memcpy(hash->val, (void*)&Z_OBJ_P(obj), sizeof(zend_object*));
+		zend_object *tmp_obj=Z_OBJ_P(obj);
+		memcpy(hash->val, (void*)&tmp_obj, sizeof(zend_object*));
 		hash->val[hash->len] = '\0';
 		return hash;
 		/* !!! FIXME

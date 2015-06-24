@@ -47,7 +47,7 @@ static void copy_zend_constant(zval *zv)
 {
 	zend_constant *c = Z_PTR_P(zv);
 
-	Z_PTR_P(zv) = pemalloc(sizeof(zend_constant), c->flags & CONST_PERSISTENT);
+	_Z_PTR_P(zv) = pemalloc(sizeof(zend_constant), c->flags & CONST_PERSISTENT);
 	memcpy(Z_PTR_P(zv), c, sizeof(zend_constant));
 
 	c = Z_PTR_P(zv);
@@ -56,7 +56,7 @@ static void copy_zend_constant(zval *zv)
 		zval_copy_ctor(&c->value);
 	} else {
 		if (Z_TYPE(c->value) == IS_STRING) {
-			Z_STR(c->value) = zend_string_dup(Z_STR(c->value), 1);
+			_Z_STR(c->value) = zend_string_dup(Z_STR(c->value), 1);
 		}
 	}
 }

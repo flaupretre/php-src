@@ -501,7 +501,7 @@ static zend_long *zend_get_property_guard(zend_object *zobj, zend_string *member
 		ALLOC_HASHTABLE(guards);
 		zend_hash_init(guards, 8, NULL, zend_property_guard_dtor, 0);
 		ZVAL_PTR(&tmp, guards);
-		Z_PTR(zobj->properties_table[zobj->ce->default_properties_count]) = guards;
+		_Z_PTR(zobj->properties_table[zobj->ce->default_properties_count]) = guards;
 		GC_FLAGS(zobj) |= IS_OBJ_HAS_GUARDS;
 	}
 

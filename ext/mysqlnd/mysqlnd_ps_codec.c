@@ -771,10 +771,12 @@ mysqlnd_stmt_execute_store_param_values(MYSQLND_STMT_DATA * stmt, zval * copies,
 		if (!Z_ISUNDEF_P(parameter) && Z_TYPE_P(data) == IS_NULL) {
 			(buf + null_byte_offset)[i/8] |= (zend_uchar) (1 << (i & 7));
 		} else {
+			double tmp;
 			switch (stmt->param_bind[i].type) {
 				case MYSQL_TYPE_DOUBLE:
 					convert_to_double_ex(data);
-					float8store(*p, Z_DVAL_P(data));
+					tmp = Z_DVAL_P(data);
+					float8store(*p, tmp);
 					(*p) += 8;
 					break;
 				case MYSQL_TYPE_LONGLONG:

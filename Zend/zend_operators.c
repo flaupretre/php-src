@@ -158,7 +158,7 @@ try_again:
 				zend_string *str;
 
 				str = Z_STR_P(op);
-				if ((Z_TYPE_INFO_P(op)=is_numeric_string(str->val, str->len, &Z_LVAL_P(op), &Z_DVAL_P(op), 1)) == 0) {
+				if ((Z_TYPE_INFO_P(op)=is_numeric_string(str->val, str->len, &_Z_LVAL_P(op), &_Z_DVAL_P(op), 1)) == 0) {
 					ZVAL_LONG(op, 0);
 				}
 				zend_string_release(str);
@@ -195,7 +195,7 @@ try_again:
 		switch (Z_TYPE_P(op)) {										\
 			case IS_STRING:											\
 				{													\
-					if ((Z_TYPE_INFO(holder)=is_numeric_string(Z_STRVAL_P(op), Z_STRLEN_P(op), &Z_LVAL(holder), &Z_DVAL(holder), 1)) == 0) {	\
+					if ((Z_TYPE_INFO(holder)=is_numeric_string(Z_STRVAL_P(op), Z_STRLEN_P(op), &_Z_LVAL(holder), &_Z_DVAL(holder), 1)) == 0) {	\
 						ZVAL_LONG(&(holder), 0);							\
 					}														\
 					(op) = &(holder);										\
@@ -978,7 +978,7 @@ ZEND_API int ZEND_FASTCALL mul_function(zval *result, zval *op1, zval *op2) /* {
 			case TYPE_PAIR(IS_LONG, IS_LONG): {
 				zend_long overflow;
 
-				ZEND_SIGNED_MULTIPLY_LONG(Z_LVAL_P(op1),Z_LVAL_P(op2), Z_LVAL_P(result),Z_DVAL_P(result),overflow);
+				ZEND_SIGNED_MULTIPLY_LONG(Z_LVAL_P(op1),Z_LVAL_P(op2), _Z_LVAL_P(result),_Z_DVAL_P(result),overflow);
 				Z_TYPE_INFO_P(result) = overflow ? IS_DOUBLE : IS_LONG;
 				return SUCCESS;
 
@@ -1774,12 +1774,12 @@ ZEND_API int compare_function(zval *result, zval *op1, zval *op2) /* {{{ */
 				return SUCCESS;
 
 			case TYPE_PAIR(IS_DOUBLE, IS_LONG):
-				Z_DVAL_P(result) = Z_DVAL_P(op1) - (double)Z_LVAL_P(op2);
+				_Z_DVAL_P(result) = Z_DVAL_P(op1) - (double)Z_LVAL_P(op2);
 				ZVAL_LONG(result, ZEND_NORMALIZE_BOOL(Z_DVAL_P(result)));
 				return SUCCESS;
 
 			case TYPE_PAIR(IS_LONG, IS_DOUBLE):
-				Z_DVAL_P(result) = (double)Z_LVAL_P(op1) - Z_DVAL_P(op2);
+				_Z_DVAL_P(result) = (double)Z_LVAL_P(op1) - Z_DVAL_P(op2);
 				ZVAL_LONG(result, ZEND_NORMALIZE_BOOL(Z_DVAL_P(result)));
 				return SUCCESS;
 
@@ -1787,7 +1787,7 @@ ZEND_API int compare_function(zval *result, zval *op1, zval *op2) /* {{{ */
 				if (Z_DVAL_P(op1) == Z_DVAL_P(op2)) {
 					ZVAL_LONG(result, 0);
 				} else {
-					Z_DVAL_P(result) = Z_DVAL_P(op1) - Z_DVAL_P(op2);
+					_Z_DVAL_P(result) = Z_DVAL_P(op1) - Z_DVAL_P(op2);
 					ZVAL_LONG(result, ZEND_NORMALIZE_BOOL(Z_DVAL_P(result)));
 				}
 				return SUCCESS;
@@ -2126,17 +2126,17 @@ static void ZEND_FASTCALL increment_string(zval *str) /* {{{ */
 
 	if (Z_STRLEN_P(str) == 0) {
 		zend_string_release(Z_STR_P(str));
-		Z_STR_P(str) = zend_string_init("1", sizeof("1")-1, 0);
+		_Z_STR_P(str) = zend_string_init("1", sizeof("1")-1, 0);
 		Z_TYPE_INFO_P(str) = IS_STRING_EX;
 		return;
 	}
 
 	if (!Z_REFCOUNTED_P(str)) {
-		Z_STR_P(str) = zend_string_init(Z_STRVAL_P(str), Z_STRLEN_P(str), 0);
+		_Z_STR_P(str) = zend_string_init(Z_STRVAL_P(str), Z_STRLEN_P(str), 0);
 		Z_TYPE_INFO_P(str) = IS_STRING_EX;
 	} else if (Z_REFCOUNT_P(str) > 1) {
 		Z_DELREF_P(str);
-		Z_STR_P(str) = zend_string_init(Z_STRVAL_P(str), Z_STRLEN_P(str), 0);
+		_Z_STR_P(str) = zend_string_init(Z_STRVAL_P(str), Z_STRLEN_P(str), 0);
 	} else {
 		zend_string_forget_hash_val(Z_STR_P(str));
 	}
@@ -2209,7 +2209,7 @@ try_again:
 			fast_long_increment_function(op1);
 			break;
 		case IS_DOUBLE:
-			Z_DVAL_P(op1) = Z_DVAL_P(op1) + 1;
+			_Z_DVAL_P(op1) = Z_DVAL_P(op1) + 1;
 			break;
 		case IS_NULL:
 			ZVAL_LONG(op1, 1);
@@ -2284,7 +2284,7 @@ try_again:
 			fast_long_decrement_function(op1);
 			break;
 		case IS_DOUBLE:
-			Z_DVAL_P(op1) = Z_DVAL_P(op1) - 1;
+			_Z_DVAL_P(op1) = Z_DVAL_P(op1) - 1;
 			break;
 		case IS_STRING:		/* Like perl we only support string increment */
 			if (Z_STRLEN_P(op1) == 0) { /* consider as 0 */

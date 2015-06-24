@@ -2059,7 +2059,7 @@ static void copy_extra_attribute(zval *zv)
 
 	new_attr = emalloc(sizeof(sdlExtraAttribute));
 	memcpy(new_attr, Z_PTR_P(zv), sizeof(sdlExtraAttribute));
-	Z_PTR_P(zv) = new_attr;
+	ZVAL_PTR(zv, new_attr);
 	if (new_attr->ns) {
 		new_attr->ns = estrdup(new_attr->ns);
 	}

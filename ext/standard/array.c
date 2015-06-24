@@ -340,8 +340,10 @@ PHP_FUNCTION(count)
 #endif
 			/* first, we check if the handler is defined */
 			if (Z_OBJ_HT_P(array)->count_elements) {
+				zend_long tmp;
 				RETVAL_LONG(1);
-				if (SUCCESS == Z_OBJ_HT(*array)->count_elements(array, &Z_LVAL_P(return_value))) {
+				tmp=Z_LVAL_P(return_value);
+				if (SUCCESS == Z_OBJ_HT(*array)->count_elements(array, &tmp)) {
 					return;
 				}
 			}
@@ -1821,7 +1823,7 @@ double_str:
 			zend_hash_real_init(Z_ARRVAL_P(return_value), 1);
 			ZEND_HASH_FILL_PACKED(Z_ARRVAL_P(return_value)) {
 			for (value = low; value >= (high - DOUBLE_DRIFT_FIX); value = low - (++i * step)) {
-				Z_DVAL(tmp) = value;
+				ZVAL_DOUBLE(&tmp, value);
 				ZEND_HASH_FILL_ADD(&tmp);
 			}
 			} ZEND_HASH_FILL_END();
@@ -1835,13 +1837,13 @@ double_str:
 			zend_hash_real_init(Z_ARRVAL_P(return_value), 1);
 			ZEND_HASH_FILL_PACKED(Z_ARRVAL_P(return_value)) {
 				for (value = low; value <= (high + DOUBLE_DRIFT_FIX); value = low + (++i * step)) {
-					Z_DVAL(tmp) = value;
+					ZVAL_DOUBLE(&tmp, value);
 					ZEND_HASH_FILL_ADD(&tmp);
 				}
 			} ZEND_HASH_FILL_END();
 		} else {
 			array_init(return_value);
-			Z_DVAL(tmp) = low;
+			ZVAL_DOUBLE(&tmp, value);
 			zend_hash_next_index_insert_new(Z_ARRVAL_P(return_value), &tmp);
 		}
 	} else {
@@ -1862,7 +1864,7 @@ long_str:
 			zend_hash_real_init(Z_ARRVAL_P(return_value), 1);
 			ZEND_HASH_FILL_PACKED(Z_ARRVAL_P(return_value)) {
 				for (; low >= high; low -= lstep) {
-					Z_LVAL(tmp) = (zend_long)low;
+					ZVAL_LONG(&tmp, (zend_long)low);
 					ZEND_HASH_FILL_ADD(&tmp);
 				}
 			} ZEND_HASH_FILL_END();
@@ -1875,13 +1877,13 @@ long_str:
 			zend_hash_real_init(Z_ARRVAL_P(return_value), 1);
 			ZEND_HASH_FILL_PACKED(Z_ARRVAL_P(return_value)) {
 				for (; low <= high; low += lstep) {
-					Z_LVAL(tmp) = (zend_long)low;
+					ZVAL_LONG(&tmp, (zend_long)low);
 					ZEND_HASH_FILL_ADD(&tmp);
 				}
 			} ZEND_HASH_FILL_END();
 		} else {
 			array_init(return_value);
-			Z_LVAL(tmp) = (zend_long)low;
+			ZVAL_LONG(&tmp, (zend_long)low);
 			zend_hash_next_index_insert_new(Z_ARRVAL_P(return_value), &tmp);
 		}
 	}
@@ -3025,7 +3027,7 @@ PHP_FUNCTION(array_count_values)
 				ZVAL_LONG(&data, 1);
 				zend_hash_index_update(Z_ARRVAL_P(return_value), Z_LVAL_P(entry), &data);
 			} else {
-				Z_LVAL_P(tmp)++;
+				ZVAL_INC_LONG(tmp);
 			}
 		} else if (Z_TYPE_P(entry) == IS_STRING) {
 			if ((tmp = zend_symtable_find(Z_ARRVAL_P(return_value), Z_STR_P(entry))) == NULL) {
@@ -3033,7 +3035,7 @@ PHP_FUNCTION(array_count_values)
 				ZVAL_LONG(&data, 1);
 				zend_symtable_update(Z_ARRVAL_P(return_value), Z_STR_P(entry), &data);
 			} else {
-				Z_LVAL_P(tmp)++;
+				ZVAL_INC_LONG(tmp);
 			}
 		} else {
 			php_error_docref(NULL, E_WARNING, "Can only count STRING and INTEGER values!");
@@ -4685,13 +4687,13 @@ PHP_FUNCTION(array_product)
 		if (Z_TYPE(entry_n) == IS_LONG && Z_TYPE_P(return_value) == IS_LONG) {
 			dval = (double)Z_LVAL_P(return_value) * (double)Z_LVAL(entry_n);
 			if ( (double)ZEND_LONG_MIN <= dval && dval <= (double)ZEND_LONG_MAX ) {
-				Z_LVAL_P(return_value) *= Z_LVAL(entry_n);
+				ZVAL_LONG(return_value, Z_LVAL_P(return_value) * Z_LVAL(entry_n));
 				continue;
 			}
 		}
 		convert_to_double(return_value);
 		convert_to_double(&entry_n);
-		Z_DVAL_P(return_value) *= Z_DVAL(entry_n);
+		ZVAL_DOUBLE(return_value, Z_DVAL_P(return_value) * Z_DVAL(entry_n));
 	} ZEND_HASH_FOREACH_END();
 }
 /* }}} */

@@ -403,12 +403,12 @@ void zend_optimizer_compact_literals(zend_op_array *op_array, zend_optimizer_ctx
 					}
 					break;
 				case IS_DOUBLE:
-					if ((pos = zend_hash_str_find(&hash, (char*)&Z_DVAL(op_array->literals[i]), sizeof(double))) != NULL) {
+					if ((pos = zend_hash_str_find(&hash, (char*)&_Z_DVAL(op_array->literals[i]), sizeof(double))) != NULL) {
 						map[i] = Z_LVAL_P(pos);
 					} else {
 						map[i] = j;
 						ZVAL_LONG(&zv, j);
-						zend_hash_str_add(&hash, (char*)&Z_DVAL(op_array->literals[i]), sizeof(double), &zv);
+						zend_hash_str_add(&hash, (char*)&_Z_DVAL(op_array->literals[i]), sizeof(double), &zv);
 						if (i != j) {
 							op_array->literals[j] = op_array->literals[i];
 							info[j] = info[i];
@@ -436,8 +436,7 @@ void zend_optimizer_compact_literals(zend_op_array *op_array, zend_optimizer_ctx
 						} else {
 							key = zend_string_init(Z_STRVAL(op_array->literals[i]), Z_STRLEN(op_array->literals[i]), 0);
 						}
-						key->h = zend_hash_func(key->val, key->len);
-						key->h += info[i].flags;
+						zend_string_set_hash_val(&key, zend_string_hash_val(key) + info[i].flags);
 					}
 					if ((info[i].flags & LITERAL_MAY_MERGE) &&
 						(pos = zend_hash_find(&hash, key)) != NULL &&

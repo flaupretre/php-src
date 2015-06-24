@@ -64,7 +64,7 @@ ZEND_API zend_ast *zend_ast_create_zval_ex(zval *zv, zend_ast_attr attr) {
 	ast->kind = ZEND_AST_ZVAL;
 	ast->attr = attr;
 	ZVAL_COPY_VALUE(&ast->val, zv);
-	ast->val.u2.lineno = CG(zend_lineno);
+	_ZVAL_U2(ast->val).lineno = CG(zend_lineno);
 	return (zend_ast *) ast;
 }
 

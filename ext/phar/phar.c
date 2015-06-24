@@ -628,7 +628,7 @@ int phar_parse_metadata(char **buffer, zval *metadata, php_uint32 zip_metadata_l
 		if (PHAR_G(persist)) {
 			/* lazy init metadata */
 			zval_ptr_dtor(metadata);
-			Z_PTR_P(metadata) = pemalloc(zip_metadata_len, 1);
+			ZVAL_PTR(metadata, pemalloc(zip_metadata_len, 1));
 			memcpy(Z_PTR_P(metadata), *buffer, zip_metadata_len);
 			return SUCCESS;
 		}

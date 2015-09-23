@@ -6259,6 +6259,9 @@ num_index_prop:
 		if (EXPECTED(Z_TYPE_P(offset) == IS_LONG)) {
 			lval = Z_LVAL_P(offset);
 isset_str_offset:
+			if (UNEXPECTED(lval < 0)) { /* Handle negative offset */
+				lval += (zend_long)Z_STRLEN_P(container);
+			}
 			if (EXPECTED(lval >= 0) && (size_t)lval < Z_STRLEN_P(container)) {
 				if (opline->extended_value & ZEND_ISSET) {
 					result = 1;
@@ -9781,6 +9784,9 @@ num_index_prop:
 		if (EXPECTED(Z_TYPE_P(offset) == IS_LONG)) {
 			lval = Z_LVAL_P(offset);
 isset_str_offset:
+			if (UNEXPECTED(lval < 0)) { /* Handle negative offset */
+				lval += (zend_long)Z_STRLEN_P(container);
+			}
 			if (EXPECTED(lval >= 0) && (size_t)lval < Z_STRLEN_P(container)) {
 				if (opline->extended_value & ZEND_ISSET) {
 					result = 1;
@@ -11526,6 +11532,9 @@ num_index_prop:
 		if (EXPECTED(Z_TYPE_P(offset) == IS_LONG)) {
 			lval = Z_LVAL_P(offset);
 isset_str_offset:
+			if (UNEXPECTED(lval < 0)) { /* Handle negative offset */
+				lval += (zend_long)Z_STRLEN_P(container);
+			}
 			if (EXPECTED(lval >= 0) && (size_t)lval < Z_STRLEN_P(container)) {
 				if (opline->extended_value & ZEND_ISSET) {
 					result = 1;
@@ -23688,6 +23697,9 @@ num_index_prop:
 		if (EXPECTED(Z_TYPE_P(offset) == IS_LONG)) {
 			lval = Z_LVAL_P(offset);
 isset_str_offset:
+			if (UNEXPECTED(lval < 0)) { /* Handle negative offset */
+				lval += (zend_long)Z_STRLEN_P(container);
+			}
 			if (EXPECTED(lval >= 0) && (size_t)lval < Z_STRLEN_P(container)) {
 				if (opline->extended_value & ZEND_ISSET) {
 					result = 1;
@@ -26170,6 +26182,9 @@ num_index_prop:
 		if (EXPECTED(Z_TYPE_P(offset) == IS_LONG)) {
 			lval = Z_LVAL_P(offset);
 isset_str_offset:
+			if (UNEXPECTED(lval < 0)) { /* Handle negative offset */
+				lval += (zend_long)Z_STRLEN_P(container);
+			}
 			if (EXPECTED(lval >= 0) && (size_t)lval < Z_STRLEN_P(container)) {
 				if (opline->extended_value & ZEND_ISSET) {
 					result = 1;
@@ -27732,6 +27747,9 @@ num_index_prop:
 		if (EXPECTED(Z_TYPE_P(offset) == IS_LONG)) {
 			lval = Z_LVAL_P(offset);
 isset_str_offset:
+			if (UNEXPECTED(lval < 0)) { /* Handle negative offset */
+				lval += (zend_long)Z_STRLEN_P(container);
+			}
 			if (EXPECTED(lval >= 0) && (size_t)lval < Z_STRLEN_P(container)) {
 				if (opline->extended_value & ZEND_ISSET) {
 					result = 1;
@@ -32098,6 +32116,9 @@ num_index_prop:
 		if (EXPECTED(Z_TYPE_P(offset) == IS_LONG)) {
 			lval = Z_LVAL_P(offset);
 isset_str_offset:
+			if (UNEXPECTED(lval < 0)) { /* Handle negative offset */
+				lval += (zend_long)Z_STRLEN_P(container);
+			}
 			if (EXPECTED(lval >= 0) && (size_t)lval < Z_STRLEN_P(container)) {
 				if (opline->extended_value & ZEND_ISSET) {
 					result = 1;
@@ -36942,6 +36963,9 @@ num_index_prop:
 		if (EXPECTED(Z_TYPE_P(offset) == IS_LONG)) {
 			lval = Z_LVAL_P(offset);
 isset_str_offset:
+			if (UNEXPECTED(lval < 0)) { /* Handle negative offset */
+				lval += (zend_long)Z_STRLEN_P(container);
+			}
 			if (EXPECTED(lval >= 0) && (size_t)lval < Z_STRLEN_P(container)) {
 				if (opline->extended_value & ZEND_ISSET) {
 					result = 1;
@@ -39407,6 +39431,9 @@ num_index_prop:
 		if (EXPECTED(Z_TYPE_P(offset) == IS_LONG)) {
 			lval = Z_LVAL_P(offset);
 isset_str_offset:
+			if (UNEXPECTED(lval < 0)) { /* Handle negative offset */
+				lval += (zend_long)Z_STRLEN_P(container);
+			}
 			if (EXPECTED(lval >= 0) && (size_t)lval < Z_STRLEN_P(container)) {
 				if (opline->extended_value & ZEND_ISSET) {
 					result = 1;
@@ -41453,6 +41480,9 @@ num_index_prop:
 		if (EXPECTED(Z_TYPE_P(offset) == IS_LONG)) {
 			lval = Z_LVAL_P(offset);
 isset_str_offset:
+			if (UNEXPECTED(lval < 0)) { /* Handle negative offset */
+				lval += (zend_long)Z_STRLEN_P(container);
+			}
 			if (EXPECTED(lval >= 0) && (size_t)lval < Z_STRLEN_P(container)) {
 				if (opline->extended_value & ZEND_ISSET) {
 					result = 1;
@@ -43552,6 +43582,9 @@ num_index_prop:
 		if (EXPECTED(Z_TYPE_P(offset) == IS_LONG)) {
 			lval = Z_LVAL_P(offset);
 isset_str_offset:
+			if (UNEXPECTED(lval < 0)) { /* Handle negative offset */
+				lval += (zend_long)Z_STRLEN_P(container);
+			}
 			if (EXPECTED(lval >= 0) && (size_t)lval < Z_STRLEN_P(container)) {
 				if (opline->extended_value & ZEND_ISSET) {
 					result = 1;
@@ -44691,6 +44724,9 @@ num_index_prop:
 		if (EXPECTED(Z_TYPE_P(offset) == IS_LONG)) {
 			lval = Z_LVAL_P(offset);
 isset_str_offset:
+			if (UNEXPECTED(lval < 0)) { /* Handle negative offset */
+				lval += (zend_long)Z_STRLEN_P(container);
+			}
 			if (EXPECTED(lval >= 0) && (size_t)lval < Z_STRLEN_P(container)) {
 				if (opline->extended_value & ZEND_ISSET) {
 					result = 1;

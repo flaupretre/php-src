@@ -37,7 +37,7 @@
 
 /*---*/
 
-#define PCS_NODE_IS_ROOT(_np)	((_np) == root)
+#define PCS_NODE_IS_ROOT(_np)	((_np) == PCS_root)
 
 /*---*/
 
@@ -45,7 +45,7 @@ struct _PCS_Node {
 	struct _PCS_Node *parent;
 	int type;
 	zend_ulong flags;
-	zend_ulong load_mode;	/* Explicit or chosen mode (!= 0) */
+	zend_ulong mode;	/* Explicit or chosen mode (!= 0) */
 	zend_string *path;
 	zend_string *uri;
 	union {
@@ -67,12 +67,16 @@ typedef struct _PCS_Node PCS_Node;
 /* Persistent data */
 /* We don't set mutexes on elements which cannot be modified after MINIT. */
 
-static PCS_Node *root;	/* Root dir */
+static PCS_Node *PCS_root;	/* Root dir */
 
-static HashTable *pathList;	/* path => (PCS_Node *) (ptr) */
-StaticMutexDeclare(pathList)
+/* PCS_pathList contains entries for every path already used to access data.
+   Maintaining such a list allows to speed up subsequent searches for
+   non-canonical paths */
 
-static HashTable *fileList; /* list of file nodes (index = file id) */
+static HashTable *PCS_pathList;	/* path => (PCS_Node *) (ptr) */
+StaticMutexDeclare(PCS_pathList)
+
+static HashTable *PCS_fileList; /* list of file nodes (index = file id) */
 
 /*---------------------------------------------------------------*/
 
@@ -87,8 +91,8 @@ static void PCS_CHECK_NODE(PCS_Node *node)
 		}
 		CHECK_ZSTRING(node->path);
 		CHECK_ZSTRING(node->uri);
-		/* load_mode is null between MINIT and first Loader init */
-		ZEND_ASSERT(node->load_mode <= PCS_LOAD_MASK);
+		/* mode is null between MINIT and first Loader init */
+		ZEND_ASSERT(node->mode <= PCS_LOAD_MASK);
 	}
 }
 #else
@@ -115,7 +119,7 @@ static zend_always_inline size_t PCS_FILE_LEN(PCS_Node *node)
 
 /*------*/
 
-static zend_always_inline int PCS_FILE_ALLOC(PCS_Node *node)
+static zend_always_inline int PCS_FILE_IS_ALLOCATED(PCS_Node *node)
 {
 	PCS_CHECK_NODE(node);
 	ZEND_ASSERT(PCS_NODE_IS_FILE(node));
@@ -148,7 +152,7 @@ static PCS_Node *PCS_Tree_addNode(const char *path, size_t path_len
 	, int type, zend_ulong flags);
 static PCS_Node *PCS_Tree_addDir(const char *path, size_t path_len, zend_ulong flags);
 static PCS_Node *PCS_Tree_addFile(const char *path, size_t path_len
-	, char *data, size_t datalen, int alloc, zend_ulong flags);
+	, char *data, size_t datalen, int alloc, zend_ulong flags, zend_ulong mode);
 static void PCS_Tree_destroyNode(zval *zp);
 static zend_string *PCS_Tree_cleanPath(const char *path, size_t len);
 static PCS_Node *PCS_Tree_resolvePath(zend_string *path);

@@ -28,23 +28,9 @@ static PHP_METHOD(PCS, __construct)
 
 static zend_function_entry PCS_methods[] = {
 	PHP_ME(PCS, __construct, UT_noarg_arginfo, ZEND_ACC_PRIVATE)
-	PHP_ME(PCS, getFunction, UT_1arg_arginfo,
-		   ZEND_ACC_STATIC | ZEND_ACC_PUBLIC)
-	PHP_ME(PCS, getConstant, UT_1arg_arginfo,
-		   ZEND_ACC_STATIC | ZEND_ACC_PUBLIC)
-	PHP_ME(PCS, getClass, UT_1arg_arginfo,
-		   ZEND_ACC_STATIC | ZEND_ACC_PUBLIC)
-	PHP_ME(PCS, requireFunction, UT_1arg_arginfo,
-		   ZEND_ACC_STATIC | ZEND_ACC_PUBLIC)
-	PHP_ME(PCS, requireConstant, UT_1arg_arginfo,
-		   ZEND_ACC_STATIC | ZEND_ACC_PUBLIC)
-	PHP_ME(PCS, requireClass, UT_1arg_arginfo,
-		   ZEND_ACC_STATIC | ZEND_ACC_PUBLIC)
 	PHP_ME(PCS, fileCount, UT_noarg_arginfo,
 		   ZEND_ACC_STATIC | ZEND_ACC_PUBLIC)
 	PHP_ME(PCS, fileInfos, UT_noarg_arginfo,
-		   ZEND_ACC_STATIC | ZEND_ACC_PUBLIC)
-	PHP_ME(PCS, symbolInfos, UT_noarg_arginfo,
 		   ZEND_ACC_STATIC | ZEND_ACC_PUBLIC)
 	{NULL, NULL, NULL, 0, 0}
 };

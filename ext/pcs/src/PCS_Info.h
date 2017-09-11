@@ -23,7 +23,6 @@
 
 static PHP_METHOD(PCS, fileCount);
 static PHP_METHOD(PCS, fileInfos);
-static PHP_METHOD(PCS, symbolInfos);
 
 /*============================================================================*/
 #endif

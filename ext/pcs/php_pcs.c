@@ -59,7 +59,7 @@
 /*------------------------*/
 /* Include embedded PHP code */
 
-#include "php/phpc/tools_code.phpc"
+#include "pcs.phpc"
 
 /*------------------------*/
 
@@ -72,13 +72,13 @@
 
 ZEND_BEGIN_MODULE_GLOBALS(pcs)
 
-zend_function *autoload_func; /* Original content of EG(autoload_func) */
+int dummy;
 
 ZEND_END_MODULE_GLOBALS(pcs)
 
 ZEND_DECLARE_MODULE_GLOBALS(pcs)
 
-#define PCS_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(pcs, v)
+#define PCS_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(pcs, v) */
 
 /*------------------------*/
 /* Including C code allows to export only the symbols we want to make public */
@@ -99,7 +99,7 @@ ZEND_DECLARE_MODULE_GLOBALS(pcs)
 static PHP_MINFO_FUNCTION(pcs)
 {
 	char buf[10];
-	zend_ulong modes[3];
+	zend_ulong modes[2];
 	PCS_Node *node;
 
 	php_info_print_table_start();
@@ -107,27 +107,24 @@ static PHP_MINFO_FUNCTION(pcs)
 	php_info_print_table_row(2, "PHP Code Service", "enabled");
 	php_info_print_table_row(2, "Version", PHP_PCS_VERSION);
 
-	sprintf(buf, "%d", (int)zend_hash_num_elements(fileList));
+	sprintf(buf, "%d", (int)zend_hash_num_elements(PCS_fileList));
 	php_info_print_table_row(2, "File count",buf);
 	php_info_print_table_end();
 
-	modes[0] = modes[1] = modes[2] = 0;
-	ZEND_HASH_FOREACH_PTR(fileList, node) {
-		modes [node->load_mode -1 ]++;
+	modes[0] = modes[1] = 0;
+	ZEND_HASH_FOREACH_PTR(PCS_fileList, node) {
+		modes [node->mode -1 ]++;
 	} ZEND_HASH_FOREACH_END();
 
 	php_info_print_table_start();
 
-	php_info_print_table_colspan_header(2, "Load mode");
+	php_info_print_table_colspan_header(2, "Mode");
 
-	sprintf(buf, "%lu", modes[PCS_LOAD_AUTOLOAD -1]);
-	php_info_print_table_row(2, "Autoloaded",buf);
-
-	sprintf(buf, "%lu", modes[PCS_LOAD_RINIT -1]);
-	php_info_print_table_row(2, "Loaded at RINIT",buf);
+	sprintf(buf, "%lu", modes[PCS_LOAD_AUTO -1]);
+	php_info_print_table_row(2, "Auto",buf);
 
 	sprintf(buf, "%lu", modes[PCS_LOAD_NONE -1]);
-	php_info_print_table_row(2, "Not loaded",buf);
+	php_info_print_table_row(2, "Raw",buf);
 
 	php_info_print_table_end();
 }
@@ -212,9 +209,10 @@ static PHP_MINIT_FUNCTION(pcs)
 	if (MINIT_PCS_API(TSRMLS_C) == FAILURE) return FAILURE;
 	if (MINIT_PCS_Info(TSRMLS_C) == FAILURE) return FAILURE;
 
-	/* Register embedded PHP code (tools) */
+	/* Register embedded PHP code */
 
-	if (PCS_registerEmbedded(tools_code, IMM_STRL("internal/tools"), 0) == FAILURE) {
+	if (PCS_registerEmbedded(pcs_code, IMM_STRL("ext/pcs"), 0
+		, 0) == FAILURE) {
 		return FAILURE;
 	}
 
@@ -242,36 +240,12 @@ static PHP_MSHUTDOWN_FUNCTION(pcs)
 /*---------------------------------------------------------------*/
 /*-- Module definition --*/
 
-ZEND_BEGIN_ARG_INFO_EX(_pcs_autoload_arginfo, 0, 0, 1)
-	ZEND_ARG_INFO(0, symbol)
-	ZEND_ARG_INFO(0, type)
-	ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(_pcs_autoload_register_arginfo, 0, 0, 0)
-	ZEND_ARG_INFO(0, autoload_function)
-	ZEND_ARG_INFO(0, throw)
-	ZEND_ARG_INFO(0, prepend)
-ZEND_END_ARG_INFO()
-
-static zend_function_entry pcs_functions[] = {
-	PHP_FE(_pcs_autoload, _pcs_autoload_arginfo)
-	PHP_FE(_pcs_autoload_register, _pcs_autoload_register_arginfo)
-	PHP_FE_END
-};
-
-static const zend_module_dep pcs_deps[] = {
-	ZEND_MOD_REQUIRED("tokenizer")
-	ZEND_MOD_REQUIRED("pcre")
-	ZEND_MOD_REQUIRED("SPL")
-	ZEND_MOD_END
-};
-
 zend_module_entry pcs_module_entry = {
 	STANDARD_MODULE_HEADER_EX,
 	NULL,
-	pcs_deps,
+	NULL,
 	MODULE_NAME,
-	pcs_functions,
+	NULL,
 	PHP_MINIT(pcs),
 	PHP_MSHUTDOWN(pcs),
 	PHP_RINIT(pcs),

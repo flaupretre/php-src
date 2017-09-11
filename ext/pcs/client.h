@@ -15,7 +15,6 @@
   | Author: Francois Laupretre <francois@tekwire.net>                    |
   +----------------------------------------------------------------------+
 */
-/* Note: please keep this API compatible with PHP 5 and 7 */
 
 #ifndef __PCS_CLIENT_H
 #define __PCS_CLIENT_H
@@ -43,38 +42,44 @@ typedef struct {
 
 #define PCS_LOAD_MASK	0x03
 
-/* The way the script will be loaded */
+/* The way the code will be loaded */
 /* Default (0) = auto :
-	- Script containing classes only -> AUTOLOAD
-	- Script containing at least one function/constant declaration -> RINIT
-	- Script containing no symbol or non-script -> NONE
-A files is recognized as a PHP script if its content starts with '<?php' */
+	- PHP script: Auto
+	- Other file: None
+A file is recognized as a PHP script if its content starts with '<?php' */
 
-#define PCS_LOAD_AUTOLOAD	0x01	/* Use autoloader */
-#define PCS_LOAD_RINIT		0x02	/* Load script at every RINIT */
-#define PCS_LOAD_NONE		0X03	/* Never load script */
+#define PCS_LOAD_AUTO	0x01	/* Make this code automatically available */
+#define PCS_LOAD_NONE	0X02	/* Don't manage this code */
 
 /*============================================================================*/
+/* Registration functions
+
+  These functions can be called during MINIT only.
+  Set mode to 0 for automatic script detection.
+*/
 
 /*----------------------------------------------------------------------------*/
-/* Registers a descriptor list produced by pcs_process_code.php.
+/* Registers a descriptor list contained in a '.phpc' file.
    Returns the number of registered scripts, or FAILURE on error.
-   Can be called during MINIT only.
+   virtual_path is a string to be used as a prefix for embedded paths.
+   By convention, use 'ext/<extension-name>' as 'virtual_path'.
 */
 
 ZEND_DLEXPORT long PCS_registerEmbedded(PCS_DESCRIPTOR *list
-	, const char *virtual_path, size_t virtual_path_len, zend_ulong flags);
+	, const char *virtual_path, size_t virtual_path_len, zend_ulong flags
+	,zend_ulong mode);
 
 /*----------------------------------------------------------------------------*/
 /* Registers a file already present in memory
    Data is not duplicated. So, it is the caller's responsibility to ensure the
    data is persistent, never overwritten, and freed at MSHUTDOWN if needed.
    Returns the ID of the registered file, or FAILURE on error.
-   Can be called during MINIT only.
+   virtual_path is mandatory here. By convention, it should start with 'ext/<extension-name>/'.
 */
 
 ZEND_DLEXPORT PCS_ID PCS_registerData(char *data, size_t data_len
-	, const char *virtual_path, size_t virtual_path_len, zend_ulong flags);
+	, const char *virtual_path, size_t virtual_path_len, zend_ulong flags
+	,zend_ulong mode);
 
 /*----------------------------------------------------------------------------*/
 /* Registers an external file/tree. filename is a path to an existing
@@ -84,16 +89,24 @@ ZEND_DLEXPORT PCS_ID PCS_registerData(char *data, size_t data_len
    current working directory when this function is executed).
    Stream-wrapped paths are not accepted.
    Returns the number of registered scripts, or FAILURE on error.
-   Can be called during MINIT only.
+   virtual_path is mandatory here. By convention, it should start with 'ext/<extension-name>/'.
 */
 
 ZEND_DLEXPORT long PCS_registerPath(const char *filename, size_t filename_len
-	, const char *virtual_path, size_t virtual_path_len, zend_ulong flags);
+	, const char *virtual_path, size_t virtual_path_len, zend_ulong flags
+	,zend_ulong mode);
+
+/*============================================================================*/
+/* Misc. functions
+
+These functions are for advanced cases only (module introspection or explicit
+management of scripts).
+*/
 
 /*----------------------------------------------------------------------------*/
 /*	Execute a registered PHP script.
 	The input arg is a PCS_ID.
-	Use only when script cannot be autoloaded.
+	Use only on PCS_LOAD_NONE nodes
 	Cannot be called during MINIT.
 	Returns SUCCESS|FAILURE.
 	If throw arg is set, generates exception on failure

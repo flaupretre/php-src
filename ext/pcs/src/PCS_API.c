@@ -47,7 +47,8 @@
 /*--------------------*/
 
 ZEND_DLEXPORT long PCS_registerEmbedded(PCS_DESCRIPTOR *list
-	, const char *virtual_path, size_t virtual_path_len, zend_ulong flags)
+	, const char *virtual_path, size_t virtual_path_len, zend_ulong flags
+	, zend_ulong mode)
 {
 	PCS_Node *node;
 	long count;
@@ -71,7 +72,7 @@ ZEND_DLEXPORT long PCS_registerEmbedded(PCS_DESCRIPTOR *list
 			return FAILURE;
 		}
 
-		if (virtual_path_len) {
+		if (virtual_path && virtual_path_len) {
 			spprintf(&path, 0, "%s/%s", virtual_path, list->path);
 			path_len = virtual_path_len + list->path_len + 1;
 		} else {
@@ -80,7 +81,7 @@ ZEND_DLEXPORT long PCS_registerEmbedded(PCS_DESCRIPTOR *list
 		}
 
 		node = PCS_Tree_addFile(path, path_len, list->data
-			, list->data_len, 0, flags);
+			, list->data_len, 0, flags, mode);
 		EFREE(path);
 		if (! node) return FAILURE;
 		list++;
@@ -93,7 +94,7 @@ ZEND_DLEXPORT long PCS_registerEmbedded(PCS_DESCRIPTOR *list
 /*--------------------*/
 
 ZEND_DLEXPORT PCS_ID PCS_registerData(char *data, size_t data_len
-	, const char *path, size_t path_len, zend_ulong flags)
+	, const char *path, size_t path_len, zend_ulong flags, zend_ulong mode)
 {
 	PCS_Node *node;
 
@@ -106,7 +107,7 @@ ZEND_DLEXPORT PCS_ID PCS_registerData(char *data, size_t data_len
 		return FAILURE;
 	}
 
-	node = PCS_Tree_addFile(path, path_len, data, data_len, 0, flags);
+	node = PCS_Tree_addFile(path, path_len, data, data_len, 0, flags, mode);
 	return (node ? PCS_FILE_ID(node) : FAILURE);
 }
 
@@ -125,7 +126,8 @@ ZEND_DLEXPORT PCS_ID PCS_registerData(char *data, size_t data_len
 	}
 
 ZEND_DLEXPORT long PCS_registerPath(const char *filename, size_t filename_len
-	, const char *virtual_path, size_t virtual_path_len, zend_ulong flags)
+	, const char *virtual_path, size_t virtual_path_len, zend_ulong flags
+	, zend_ulong mode)
 {
 	char *data = NULL, *sub_fname, *sub_vpath, *dname;
 	size_t datalen, sub_fname_len, sub_vpath_len;
@@ -159,7 +161,7 @@ ZEND_DLEXPORT long PCS_registerPath(const char *filename, size_t filename_len
 		
 		/* Recurse on dir entries */
 
-		nb = php_scandir(filename, &namelist, 0, NULL);
+		nb = php_scandir(filename, &namelist, 0, php_alphasort);
 		if (nb < 0) {
 			php_error(E_CORE_ERROR,"%s: Cannot scan directory", filename);
 			return FAILURE;
@@ -174,7 +176,7 @@ ZEND_DLEXPORT long PCS_registerPath(const char *filename, size_t filename_len
 				sub_fname_len = strlen(sub_fname);
 				spprintf(&sub_vpath, 0, "%s/%s", virtual_path, dname);
 				sub_vpath_len = strlen(sub_vpath);
-				status = PCS_registerPath(sub_fname, sub_fname_len, sub_vpath, sub_vpath_len, flags);
+				status = PCS_registerPath(sub_fname, sub_fname_len, sub_vpath, sub_vpath_len, flags, mode);
 				EFREE(sub_fname);
 				EFREE(sub_vpath);
 				if (status == FAILURE) {
@@ -203,7 +205,7 @@ ZEND_DLEXPORT long PCS_registerPath(const char *filename, size_t filename_len
 			while (!fread(data, datalen, 1, fp)) {}
 		}
 		data[datalen]='\0';
-		if (! PCS_Tree_addFile(virtual_path, virtual_path_len, data, datalen, 1, flags)) {
+		if (! PCS_Tree_addFile(virtual_path, virtual_path_len, data, datalen, 1, flags, mode)) {
 			ABORT_PCS_registerPath();
 		}
 		data = NULL;

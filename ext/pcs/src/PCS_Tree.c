@@ -96,7 +96,6 @@ static PCS_Node *PCS_Tree_addSubNode(PCS_Node *parent, const char *name
 		node->path = zend_string_init("", 0, 1);
 	}
 	zend_string_hash_val(node->path);
-
 	node->uri = zend_string_alloc(ZSTR_LEN(node->path) + 6, 1);
 	sprintf(ZSTR_VAL(node->uri), "pcs://%s", ZSTR_VAL(node->path));
 	zend_string_hash_val(node->uri);
@@ -204,6 +203,10 @@ static void PCS_Tree_destroyNode(zval *zp)
 	nodep = (PCS_Node **)COMPAT_HASH_PTR(zp);
 	node = *nodep;
 
+	DBG_MSG1("-> PCS_Tree_destroyNode: ZURI=%x",node->uri);
+	DBG_MSG1("-> PCS_Tree_destroyNode: URI=%x",ZSTR_VAL(node->uri));
+	DBG_MSG1("-> PCS_Tree_destroyNode(%s)",ZSTR_VAL(node->uri));
+
 #if ZEND_DEBUG
 	node->flags |= PCS_FLAG_NOCHECK; /* Checks will fail during tree destruction */
 #endif
@@ -220,6 +223,7 @@ static void PCS_Tree_destroyNode(zval *zp)
 	}
 
 	PFREE(*nodep); /* Security: free and set null ptr */
+	DBG_MSG("<- PCS_Tree_destroyNode");
 }
 
 /*--------------------*/
@@ -377,6 +381,7 @@ static zend_always_inline int MINIT_PCS_Tree(TSRMLS_D)
 
 static zend_always_inline int MSHUTDOWN_PCS_Tree(TSRMLS_D)
 {
+	zval zv;
 
 	/* Free path list */
 
@@ -391,31 +396,10 @@ static zend_always_inline int MSHUTDOWN_PCS_Tree(TSRMLS_D)
 
 	/* Destroy tree */
 
-#ifdef PHP_7
-	{
-	zval zv;
-	
 	ZVAL_PTR(&zv, PCS_root);
 	PCS_Tree_destroyNode(&zv);
 	PCS_root = NULL;
-	}
-#else
-	PCS_Tree_destroyNode((zval *)(&PCS_root));
-#endif
 	
-	return SUCCESS;
-}
-
-/*---------------------------------------------------------------*/
-
-static zend_always_inline int RINIT_PCS_Tree(TSRMLS_D)
-{
-	return SUCCESS;
-}
-/*---------------------------------------------------------------*/
-
-static zend_always_inline int RSHUTDOWN_PCS_Tree(TSRMLS_D)
-{
 	return SUCCESS;
 }
 

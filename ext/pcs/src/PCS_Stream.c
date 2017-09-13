@@ -360,13 +360,8 @@ static php_stream *PCS_Stream_generic_open(int dir, php_stream_wrapper *wrapper
 		switch (php_stream_from_persistent_id(persistent_id, &ret TSRMLS_CC)) {
 			case PHP_STREAM_PERSISTENT_SUCCESS:
 				if (opened_path) {
-#ifdef PHP_7
-					zend_string_addref(dp->node->uri);
-					(*opened_path) = dp->node->uri;
-#else
-					(*opened_path) = ut_eduplicate(ZSTR_VAL(dp->node->uri)
-						, ZSTR_LEN(dp->node->uri) + 1);
-#endif
+					(*opened_path) = zend_string_alloc(ZSTR_LEN(dp->node->uri), persistent);
+					memcpy(ZSTR_VAL(*opened_path), ZSTR_VAL(dp->node->uri), ZSTR_LEN(dp->node->uri));
 				}
 			/* fall through */
 			case PHP_STREAM_PERSISTENT_FAILURE:
@@ -384,14 +379,9 @@ static php_stream *PCS_Stream_generic_open(int dir, php_stream_wrapper *wrapper
 		dp->offset = 0;	/*-- Initialize offset */
 	}
 
-	if (opened_path) { /* Return canonical path as opened path */
-#ifdef PHP_7
-		zend_string_addref(dp->node->uri);
-		(*opened_path) = dp->node->uri;
-#else
-		(*opened_path) = ut_eduplicate(ZSTR_VAL(dp->node->uri)
-			, ZSTR_LEN(dp->node->uri) + 1);
-#endif
+	if (opened_path && (!persistent)) { /* Return canonical path as opened path */
+		(*opened_path) = zend_string_alloc(ZSTR_LEN(dp->node->uri), persistent);
+		memcpy(ZSTR_VAL(*opened_path), ZSTR_VAL(dp->node->uri), ZSTR_LEN(dp->node->uri)+1);
 	}
 
 	DBG_MSG("<- generic_open()");
@@ -453,20 +443,6 @@ static zend_always_inline int MSHUTDOWN_PCS_Stream(TSRMLS_D)
 {
 	php_unregister_url_stream_wrapper("pcs" TSRMLS_CC);
 
-	return SUCCESS;
-}
-
-/*---------------------------------------------------------------*/
-
-static zend_always_inline int RINIT_PCS_Stream(TSRMLS_D)
-{
-	return SUCCESS;
-}
-
-/*---------------------------------------------------------------*/
-
-static zend_always_inline int RSHUTDOWN_PCS_Stream(TSRMLS_D)
-{
 	return SUCCESS;
 }
 

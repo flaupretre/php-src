@@ -36,6 +36,8 @@
 static int PCS_Loader_loadNode(PCS_Node *node, int throw TSRMLS_DC)
 {
 	zend_file_handle file_handle;
+	zend_op_array *op_array;
+	zval zret;
 
 	ZEND_ASSERT(node);
 	DBG_MSG1("-> PCS_Loader_loadNode(%s)",ZSTR_VAL(node->path));
@@ -54,10 +56,6 @@ static int PCS_Loader_loadNode(PCS_Node *node, int throw TSRMLS_DC)
 	file_handle.filename = ZSTR_VAL(node->uri);
 	file_handle.opened_path = NULL;
 	file_handle.free_filename = 0;
-
-	{
-	zend_op_array *op_array;
-	zval zret;
 
 	op_array = zend_compile_file(&file_handle, ZEND_REQUIRE TSRMLS_CC);
 	zend_destroy_file_handle(&file_handle TSRMLS_CC);
@@ -86,35 +84,27 @@ static int PCS_Loader_loadNode(PCS_Node *node, int throw TSRMLS_DC)
 	zval_ptr_dtor(&zret);
 	destroy_op_array(op_array TSRMLS_CC);
 	EFREE(op_array);
-	}
 
 	return SUCCESS;
 }
 
 /*===============================================================*/
 
-static zend_always_inline int MINIT_PCS_Loader(TSRMLS_D)
-{
-	return SUCCESS;
-}
-
-/*---------------------------------------------------------------*/
-
-static zend_always_inline int MSHUTDOWN_PCS_Loader(TSRMLS_D)
-{
-	return SUCCESS;
-}
-
-/*---------------------------------------------------------------*/
-
 static zend_always_inline int RINIT_PCS_Loader(TSRMLS_D)
 {
-	return SUCCESS;
-}
-/*---------------------------------------------------------------*/
+	PCS_Node *node;
 
-static zend_always_inline int RSHUTDOWN_PCS_Loader(TSRMLS_D)
-{
+	/* Load scripts marked as PCS_LOAD_RINIT */
+
+	DBG_MSG("Loading scripts marked as PCS_LOAD_AUTO");
+	ZEND_HASH_FOREACH_PTR(PCS_fileList, node) {
+		if (node->mode == PCS_LOAD_AUTO) {
+			if (PCS_Loader_loadNode(node, 1 TSRMLS_CC) == FAILURE) {
+				return FAILURE;
+			}
+		}
+	} ZEND_HASH_FOREACH_END();
+
 	return SUCCESS;
 }
 

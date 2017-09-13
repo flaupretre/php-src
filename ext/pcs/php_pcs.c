@@ -46,7 +46,7 @@
 /*---------------------------------------------------------------*/
 
 #include "php_pcs.h"
-#include "./client.h"
+#include "./pcs_client.h"
 
 #include "src/PCS_Utils.h"
 #include "src/PCS_Tree.h"
@@ -54,12 +54,12 @@
 #include "src/PCS_Stream.h"
 #include "src/PCS_Loader.h"
 #include "src/PCS_API.h"
-#include "src/PCS_Info.h"
 
 /*------------------------*/
 /* Include embedded PHP code */
 
-#include "pcs.phpc"
+#include "auto.phpc"
+#include "raw.phpc"
 
 /*------------------------*/
 
@@ -67,18 +67,6 @@
 	ZEND_TSRMLS_CACHE_DEFINE();
 	ZEND_GET_MODULE(pcs)
 #endif
-
-/*------------------------*/
-
-ZEND_BEGIN_MODULE_GLOBALS(pcs)
-
-int dummy;
-
-ZEND_END_MODULE_GLOBALS(pcs)
-
-ZEND_DECLARE_MODULE_GLOBALS(pcs)
-
-#define PCS_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(pcs, v) */
 
 /*------------------------*/
 /* Including C code allows to export only the symbols we want to make public */
@@ -91,7 +79,6 @@ ZEND_DECLARE_MODULE_GLOBALS(pcs)
 #include "src/PCS_Stream.c"
 #include "src/PCS_Loader.c"
 #include "src/PCS_API.c"
-#include "src/PCS_Info.c"
 
 /*---------------------------------------------------------------*/
 /* phpinfo() output                                              */
@@ -130,25 +117,6 @@ static PHP_MINFO_FUNCTION(pcs)
 }
 
 /*---------------------------------------------------------------*/
-/* Initialize a new zend_pcs_globals struct during thread spin-up */
-
-static void pcs_globals_ctor(zend_pcs_globals * globals TSRMLS_DC)
-{
-#ifdef COMPILE_DL_PCS
-	ZEND_TSRMLS_CACHE_UPDATE();
-#endif
-
-	CLEAR_DATA(*globals); /* Init everything to 0/NULL */
-}
-
-/*------------------------*/
-/* Resources allocated during initialization are freed here */
-
-static void pcs_globals_dtor(zend_pcs_globals * globals TSRMLS_DC)
-{
-}
-
-/*---------------------------------------------------------------*/
 
 static PHP_RINIT_FUNCTION(pcs)
 {
@@ -156,13 +124,7 @@ static PHP_RINIT_FUNCTION(pcs)
 	
 	in_startup = 0;
 
-	if (RINIT_PCS_Utils(TSRMLS_C) == FAILURE) return FAILURE;
-	if (RINIT_PCS_Tree(TSRMLS_C) == FAILURE) return FAILURE;
-	if (RINIT_PCS_Class(TSRMLS_C) == FAILURE) return FAILURE;
-	if (RINIT_PCS_Stream(TSRMLS_C) == FAILURE) return FAILURE;
 	if (RINIT_PCS_Loader(TSRMLS_C) == FAILURE) return FAILURE;
-	if (RINIT_PCS_API(TSRMLS_C) == FAILURE) return FAILURE;
-	if (RINIT_PCS_Info(TSRMLS_C) == FAILURE) return FAILURE;
 
 	DBG_MSG("<- PCS RINIT");
 	return SUCCESS;
@@ -172,14 +134,6 @@ static PHP_RINIT_FUNCTION(pcs)
 
 static PHP_RSHUTDOWN_FUNCTION(pcs)
 {
-	if (RSHUTDOWN_PCS_Info(TSRMLS_C) == FAILURE) return FAILURE;
-	if (RSHUTDOWN_PCS_API(TSRMLS_C) == FAILURE) return FAILURE;
-	if (RSHUTDOWN_PCS_Loader(TSRMLS_C) == FAILURE) return FAILURE;
-	if (RSHUTDOWN_PCS_Stream(TSRMLS_C) == FAILURE) return FAILURE;
-	if (RSHUTDOWN_PCS_Class(TSRMLS_C) == FAILURE) return FAILURE;
-	if (RSHUTDOWN_PCS_Tree(TSRMLS_C) == FAILURE) return FAILURE;
-	if (RSHUTDOWN_PCS_Utils(TSRMLS_C) == FAILURE) return FAILURE;
-
 	return SUCCESS;
 }
 
@@ -187,32 +141,24 @@ static PHP_RSHUTDOWN_FUNCTION(pcs)
 
 static PHP_MINIT_FUNCTION(pcs)
 {
-#ifndef PHP_7
-	/* In some PHP versions, valgrind reports a conditional jump on
-	uninitialized data when calling php_error() during MINIT because
-	EG(exception is not initialized yet. */
-
-	EG(exception) = NULL;
-#endif
+	zend_class_entry ce;
 
 	DBG_INIT();
 	DBG_MSG("-> PCS MINIT");
 
-	ZEND_INIT_MODULE_GLOBALS(pcs, pcs_globals_ctor, NULL);
-
-	
-	if (MINIT_PCS_Utils(TSRMLS_C) == FAILURE) return FAILURE;
 	if (MINIT_PCS_Tree(TSRMLS_C) == FAILURE) return FAILURE;
+
 	if (MINIT_PCS_Class(TSRMLS_C) == FAILURE) return FAILURE;
+
 	if (MINIT_PCS_Stream(TSRMLS_C) == FAILURE) return FAILURE;
-	if (MINIT_PCS_Loader(TSRMLS_C) == FAILURE) return FAILURE;
-	if (MINIT_PCS_API(TSRMLS_C) == FAILURE) return FAILURE;
-	if (MINIT_PCS_Info(TSRMLS_C) == FAILURE) return FAILURE;
 
-	/* Register embedded PHP code */
+	/* Register PHP code */
 
-	if (PCS_registerEmbedded(pcs_code, IMM_STRL("ext/pcs"), 0
-		, 0) == FAILURE) {
+	if (PCS_registerEmbedded(auto_pcs_code, IMM_STRL("ext/pcs"), 0, 0) == FAILURE) {
+		return FAILURE;
+	}
+
+	if (PCS_registerEmbedded(raw_pcs_code, IMM_STRL("ext/pcs"), 0, PCS_LOAD_NONE) == FAILURE) {
 		return FAILURE;
 	}
 
@@ -224,15 +170,9 @@ static PHP_MINIT_FUNCTION(pcs)
 
 static PHP_MSHUTDOWN_FUNCTION(pcs)
 {
-	pcs_globals_dtor(ZEND_MODULE_GLOBALS_BULK(pcs) TSRMLS_CC);
-
-	if (MSHUTDOWN_PCS_Info(TSRMLS_C) == FAILURE) return FAILURE;
-	if (MSHUTDOWN_PCS_API(TSRMLS_C) == FAILURE) return FAILURE;
-	if (MSHUTDOWN_PCS_Loader(TSRMLS_C) == FAILURE) return FAILURE;
 	if (MSHUTDOWN_PCS_Stream(TSRMLS_C) == FAILURE) return FAILURE;
-	if (MSHUTDOWN_PCS_Class(TSRMLS_C) == FAILURE) return FAILURE;
+
 	if (MSHUTDOWN_PCS_Tree(TSRMLS_C) == FAILURE) return FAILURE;
-	if (MSHUTDOWN_PCS_Utils(TSRMLS_C) == FAILURE) return FAILURE;
 
 	return SUCCESS;
 }
@@ -241,9 +181,7 @@ static PHP_MSHUTDOWN_FUNCTION(pcs)
 /*-- Module definition --*/
 
 zend_module_entry pcs_module_entry = {
-	STANDARD_MODULE_HEADER_EX,
-	NULL,
-	NULL,
+	STANDARD_MODULE_HEADER,
 	MODULE_NAME,
 	NULL,
 	PHP_MINIT(pcs),

@@ -64,30 +64,3 @@ static PHP_METHOD(PCS, fileInfos)
 }
 
 /*===============================================================*/
-
-static zend_always_inline int MINIT_PCS_Info(TSRMLS_D)
-{
-	return SUCCESS;
-}
-
-/*---------------------------------------------------------------*/
-
-static zend_always_inline int MSHUTDOWN_PCS_Info(TSRMLS_D)
-{
-	return SUCCESS;
-}
-
-/*---------------------------------------------------------------*/
-
-static zend_always_inline int RINIT_PCS_Info(TSRMLS_D)
-{
-	return SUCCESS;
-}
-/*---------------------------------------------------------------*/
-
-static zend_always_inline int RSHUTDOWN_PCS_Info(TSRMLS_D)
-{
-	return SUCCESS;
-}
-
-/*===============================================================*/

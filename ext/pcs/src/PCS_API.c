@@ -286,30 +286,3 @@ ZEND_DLEXPORT PCS_ID PCS_getID(const char *path, size_t path_len)
 }
 
 /*===============================================================*/
-
-static zend_always_inline int MINIT_PCS_API(TSRMLS_D)
-{
-	return SUCCESS;
-}
-
-/*---------------------------------------------------------------*/
-
-static zend_always_inline int MSHUTDOWN_PCS_API(TSRMLS_D)
-{
-	return SUCCESS;
-}
-
-/*---------------------------------------------------------------*/
-
-static zend_always_inline int RINIT_PCS_API(TSRMLS_D)
-{
-	return SUCCESS;
-}
-/*---------------------------------------------------------------*/
-
-static zend_always_inline int RSHUTDOWN_PCS_API(TSRMLS_D)
-{
-	return SUCCESS;
-}
-
-/*===============================================================*/

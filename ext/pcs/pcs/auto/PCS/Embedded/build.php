@@ -1,8 +1,9 @@
+<?php
 /*
   +----------------------------------------------------------------------+
-  | PCS extension <http://PCS.tekwire.net>                       |
+  | PCS extension <http://pcs.tekwire.net>                               |
   +----------------------------------------------------------------------+
-  | Copyright (c) 2005-2015 The PHP Group                                |
+  | Copyright (c) 2015 The PHP Group                                     |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
   | that is bundled with this package in the file LICENSE, and is        |
@@ -15,17 +16,30 @@
   | Author: Francois Laupretre <francois@tekwire.net>                    |
   +----------------------------------------------------------------------+
 */
+//=============================================================================
 
-/*---------------------------------------------------------------*/
+namespace PCS\Embedded {
 
-int PCS_Utils_assertModuleIsStarted()
+function build($ipath, $opath, $prefix=null)
 {
-	if (! ut_moduleIsStarted(MODULE_NAME, sizeof(MODULE_NAME) - 1)) {
-		php_error(E_CORE_ERROR,"Cannot call PCS before it is started. Please use a module dependency");
-		return FAILURE;
+	include(dirname(__FILE__).'/FileArray.php');
+	include(dirname(__FILE__).'/File.php');
+
+	#---
+
+	if (is_null($prefix)) {
+		$a=explode('.',basename($opath));
+		$prefix=$a[0];
 	}
+
+	$a=new \PCS\Embedded\FileArray();
 	
-	return SUCCESS;
+	$a->register($ipath, '');
+
+	$output = $a->dump($prefix);
+	file_put_contents($opath, $output);
 }
 
-/*===============================================================*/
+//=============================================================================
+}
+?>

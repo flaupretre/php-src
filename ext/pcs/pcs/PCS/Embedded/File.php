@@ -17,6 +17,8 @@
   +----------------------------------------------------------------------+
 */
 //=============================================================================
+// This code is loaded by explicit request only
+//PCS:LOAD=FALSE
 
 namespace PCS\Embedded {
 
@@ -81,8 +83,22 @@ public function strip()
 		} else {
 			switch($token[0]) {
 				case T_DOC_COMMENT:
-				case T_COMMENT:
 					$res .= self::strip_string($token[1]);
+					break;
+				case T_COMMENT:
+					// Keep parser directives only
+					$keep = false;
+					if (strlen($token[1]) > 3) {
+						$s = substr($token[1], 2);
+						if ((strlen($s) > 5) && (substr($s, 0, 4) == 'PCS:')) {
+							$keep = true;
+						}
+					}
+					if ($keep) {
+						$res .= $token[1];
+					} else {
+						$res .= self::strip_string($token[1]);
+					}
 					break;
 				case T_WHITESPACE:
 					// reduce wide spaces

@@ -47,8 +47,7 @@
 /*--------------------*/
 
 ZEND_DLEXPORT long PCS_registerEmbedded(PCS_DESCRIPTOR *list
-	, const char *virtual_path, size_t virtual_path_len, zend_ulong flags
-	, zend_ulong mode)
+	, const char *virtual_path, size_t virtual_path_len, zend_ulong flags)
 {
 	PCS_Node *node;
 	long count;
@@ -80,8 +79,7 @@ ZEND_DLEXPORT long PCS_registerEmbedded(PCS_DESCRIPTOR *list
 			path_len = list->path_len;
 		}
 
-		node = PCS_Tree_addFile(path, path_len, list->data
-			, list->data_len, 0, flags, mode);
+		node = PCS_Tree_addFile(path, path_len, list->data, list->data_len, 0, flags);
 		EFREE(path);
 		if (! node) return FAILURE;
 		list++;
@@ -94,21 +92,21 @@ ZEND_DLEXPORT long PCS_registerEmbedded(PCS_DESCRIPTOR *list
 /*--------------------*/
 
 ZEND_DLEXPORT PCS_ID PCS_registerData(char *data, size_t data_len
-	, const char *path, size_t path_len, zend_ulong flags, zend_ulong mode)
+	, const char *path, size_t path_len, zend_ulong flags)
 {
 	PCS_Node *node;
 
 	if (! in_startup) {
 		php_error(E_CORE_ERROR, "PCS_registerData() can be called during MINIT only");
-		return FAILURE;
+		return NULL;
 	}
 
 	if (PCS_Utils_assertModuleIsStarted() == FAILURE) {
-		return FAILURE;
+		return NULL;
 	}
 
-	node = PCS_Tree_addFile(path, path_len, data, data_len, 0, flags, mode);
-	return (node ? PCS_FILE_ID(node) : FAILURE);
+	node = PCS_Tree_addFile(path, path_len, data, data_len, 0, flags);
+	return (node ? (PCS_ID)node : NULL);
 }
 
 /*--------------------*/
@@ -126,8 +124,7 @@ ZEND_DLEXPORT PCS_ID PCS_registerData(char *data, size_t data_len
 	}
 
 ZEND_DLEXPORT long PCS_registerPath(const char *filename, size_t filename_len
-	, const char *virtual_path, size_t virtual_path_len, zend_ulong flags
-	, zend_ulong mode)
+	, const char *virtual_path, size_t virtual_path_len, zend_ulong flags)
 {
 	char *data = NULL, *sub_fname, *sub_vpath, *dname;
 	size_t datalen, sub_fname_len, sub_vpath_len;
@@ -176,7 +173,7 @@ ZEND_DLEXPORT long PCS_registerPath(const char *filename, size_t filename_len
 				sub_fname_len = strlen(sub_fname);
 				spprintf(&sub_vpath, 0, "%s/%s", virtual_path, dname);
 				sub_vpath_len = strlen(sub_vpath);
-				status = PCS_registerPath(sub_fname, sub_fname_len, sub_vpath, sub_vpath_len, flags, mode);
+				status = PCS_registerPath(sub_fname, sub_fname_len, sub_vpath, sub_vpath_len, flags);
 				EFREE(sub_fname);
 				EFREE(sub_vpath);
 				if (status == FAILURE) {
@@ -205,7 +202,7 @@ ZEND_DLEXPORT long PCS_registerPath(const char *filename, size_t filename_len
 			while (!fread(data, datalen, 1, fp)) {}
 		}
 		data[datalen]='\0';
-		if (! PCS_Tree_addFile(virtual_path, virtual_path_len, data, datalen, 1, flags, mode)) {
+		if (! PCS_Tree_addFile(virtual_path, virtual_path_len, data, datalen, 1, flags)) {
 			ABORT_PCS_registerPath();
 		}
 		data = NULL;
@@ -220,69 +217,96 @@ ZEND_DLEXPORT long PCS_registerPath(const char *filename, size_t filename_len
 
 /*--------------------*/
 
-ZEND_DLEXPORT int PCS_loadScript(PCS_ID id, int throw TSRMLS_DC)
+#define CHECK_INPUT_ID(_func, _ret) \
+	if (! id) {	\
+		if (throw) {	\
+			THROW_EXCEPTION(_func ": Received invalid (null) ID");	\
+		}	\
+		return _ret;	\
+	}
+
+#define CHECK_MODULE_IS_STARTED(_func, _ret) \
+	if (in_startup) {	\
+		if (throw) {	\
+			THROW_EXCEPTION(_func "() cannot be called during MINIT");	\
+		}	\
+		return _ret;	\
+	}	\
+	if (PCS_Utils_assertModuleIsStarted() == FAILURE) {	\
+		if (throw) {	\
+			THROW_EXCEPTION("PCS module is not active");	\
+		}	\
+		return _ret;	\
+	}
+
+/*--------------------*/
+
+ZEND_DLEXPORT int PCS_load(PCS_ID id, int throw)
 {
-	PCS_Node *node;
+	CHECK_MODULE_IS_STARTED("PCS_load", FAILURE)
+	CHECK_INPUT_ID("PCS_load", FAILURE);
 
-	if (in_startup) {
-		if (throw) {
-			THROW_EXCEPTION("PCS_loadScript() cannot be called during MINIT");
-		}
-		return FAILURE;
-	}
-
-	if (PCS_Utils_assertModuleIsStarted() == FAILURE) {
-		if (throw) {
-			THROW_EXCEPTION("PCS module is not active");
-		}
-		return FAILURE;
-	}
-
-	node = PCS_Tree_getNodeFromID(id);
-	if (! node) {
-		if (throw) {
-			THROW_EXCEPTION_1("Cannot get PCS node from ID (%ld)", id);
-		}
-		return FAILURE;
-	}
-
-	return PCS_Loader_loadNode(node, throw TSRMLS_CC);
+	return PCS_Loader_loadNode((PCS_Node *)id, throw);
 }
 
 /*--------------------*/
 
-ZEND_DLEXPORT char *PCS_getPath(PCS_ID id)
+ZEND_DLEXPORT char *PCS_getPathFromID(PCS_ID id, int throw )
 {
-	PCS_Node *node;
+	CHECK_MODULE_IS_STARTED("PCS_getPathFromID", NULL)
+	CHECK_INPUT_ID("PCS_getPathFromID", NULL);
 
-	if (PCS_Utils_assertModuleIsStarted() == FAILURE) {
-		return NULL;
-	}
-
-	node = PCS_Tree_getNodeFromID(id);
-	if (! node) {
-		return NULL;
-	}
-
-	return ZSTR_VAL(node->path);
+	return ZSTR_VAL(((PCS_Node *)id)->path);
 }
 
 /*--------------------*/
 
-ZEND_DLEXPORT PCS_ID PCS_getID(const char *path, size_t path_len)
+ZEND_DLEXPORT char *PCS_getURIFromID(PCS_ID id, int throw )
+{
+	CHECK_MODULE_IS_STARTED("PCS_getURIFromID", NULL)
+	CHECK_INPUT_ID("PCS_getURIFromID", NULL);
+
+	return ZSTR_VAL(((PCS_Node *)id)->uri);
+}
+
+/*--------------------*/
+
+ZEND_DLEXPORT PCS_ID PCS_getIDFromPath(const char *path, int throw)
 {
 	PCS_Node *node;
 
-	if (PCS_Utils_assertModuleIsStarted() == FAILURE) {
-		return FAILURE;
-	}
+	CHECK_MODULE_IS_STARTED("PCS_getIDFromPath", NULL)
 
-	node = PCS_Tree_getNodeFromPath(path, path_len);
+	node = PCS_Tree_getNodeFromPath(path, strlen(path));
 	if (! node) {
-		return FAILURE;
+		if (throw) {
+			THROW_EXCEPTION_1("%s: Node not found", path);
+		}
+		return NULL;
 	}
 
-	return PCS_FILE_ID(node);
+	return (PCS_ID)node;
+}
+
+/*--------------------*/
+
+ZEND_DLEXPORT PCS_ID PCS_getIDFromURI(const char *uri, int throw)
+{
+	CHECK_MODULE_IS_STARTED("PCS_getIDFromURI", NULL)
+
+	if ((uri[0] != 'p')
+		|| (uri[1] != 'c')
+		|| (uri[2] != 's')
+		|| (uri[3] != ':')
+		|| (uri[4] != '/')
+		|| (uri[5] != '/')) {
+		if (throw) {
+			THROW_EXCEPTION_1("%S: Invalid PCS URI (should start with 'pcs://'", uri);
+		}
+		return NULL;
+	}
+
+	return PCS_getIDFromPath(uri + 6, throw);
 }
 
 /*===============================================================*/

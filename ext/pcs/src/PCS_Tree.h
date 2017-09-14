@@ -29,15 +29,18 @@
 #define PCS_NODE_IS_DIR(np)		((np)->type == PCS_TYPE_DIR)
 #define PCS_NODE_IS_FILE(np)	((np)->type == PCS_TYPE_FILE)
 
-/* For flag definitions, see client include file */
+/*-- Flags --*/
 
-/* Unpublished - used internally to avoid valgrind errors in debug mode */
+#define PCS_FLAG_NOCHECK	0x01	/* Unpublished - avoids valgrind errors in debug mode */
 
-#define PCS_FLAG_NOCHECK	0x04	/* Avoids valgrind errors in debug mode */
+/*-- Load mode --*/
+
+#define PCS_LOAD_ALWAYS	0x01	/* This code is always available */
+#define PCS_LOAD_NONE	0X02	/* PCS does not manage this code */
 
 /*---*/
 
-#define PCS_NODE_IS_ROOT(_np)	((_np) == PCS_root)
+#define PCS_NODE_IS_ROOT(_np)	((_np)->parent == NULL)
 
 /*---*/
 
@@ -45,7 +48,7 @@ struct _PCS_Node {
 	struct _PCS_Node *parent;
 	int type;
 	zend_ulong flags;
-	zend_ulong mode;	/* Explicit or chosen mode (!= 0) */
+	zend_ulong mode;
 	zend_string *path;
 	zend_string *uri;
 	union {
@@ -53,7 +56,6 @@ struct _PCS_Node {
 			char *data;
 			size_t len;
 			int alloc;
-			zend_ulong id;
 		} f;
 		struct {
 			HashTable items; /* <entry name> => (PCS_Node *) (ptr) */
@@ -76,7 +78,8 @@ static PCS_Node *PCS_root;	/* Root dir */
 static HashTable *PCS_pathList;	/* path => (PCS_Node *) (ptr) */
 StaticMutexDeclare(PCS_pathList)
 
-static HashTable *PCS_fileList; /* list of file nodes (index = file id) */
+static PCS_Node **PCS_fileList; /* list of file nodes */
+static zend_ulong PCS_fileCount; /* Size of PCS_fileList */
 
 /*---------------------------------------------------------------*/
 
@@ -91,8 +94,6 @@ static void PCS_CHECK_NODE(PCS_Node *node)
 		}
 		CHECK_ZSTRING(node->path);
 		CHECK_ZSTRING(node->uri);
-		/* mode is null between MINIT and first Loader init */
-		ZEND_ASSERT(node->mode <= PCS_LOAD_MASK);
 	}
 }
 #else
@@ -128,15 +129,6 @@ static zend_always_inline int PCS_FILE_IS_ALLOCATED(PCS_Node *node)
 
 /*------*/
 
-static zend_always_inline zend_ulong PCS_FILE_ID(PCS_Node *node)
-{
-	PCS_CHECK_NODE(node);
-	ZEND_ASSERT(PCS_NODE_IS_FILE(node));
-	return node->u.f.id;
-}
-
-/*------*/
-
 static zend_always_inline HashTable *PCS_DIR_HT(PCS_Node *node)
 {
 	PCS_CHECK_NODE(node);
@@ -152,12 +144,12 @@ static PCS_Node *PCS_Tree_addNode(const char *path, size_t path_len
 	, int type, zend_ulong flags);
 static PCS_Node *PCS_Tree_addDir(const char *path, size_t path_len, zend_ulong flags);
 static PCS_Node *PCS_Tree_addFile(const char *path, size_t path_len
-	, char *data, size_t datalen, int alloc, zend_ulong flags, zend_ulong mode);
+	, char *data, size_t datalen, int alloc, zend_ulong flags);
+static zend_ulong PCS_Tree_computeMode(char *data, size_t datalen, zend_ulong flags);
 static void PCS_Tree_destroyNode(zval *zp);
 static zend_string *PCS_Tree_cleanPath(const char *path, size_t len);
 static PCS_Node *PCS_Tree_resolvePath(zend_string *path);
 static PCS_Node *PCS_Tree_getNodeFromPath(const char *path, size_t len);
-static PCS_Node *PCS_Tree_getNodeFromID(PCS_ID id);
 static char PCS_Tree_LoadModeToDisplay(const PCS_Node *node);
 
 /*============================================================================*/

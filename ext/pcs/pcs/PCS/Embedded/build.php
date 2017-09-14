@@ -1,6 +1,7 @@
+<?php
 /*
   +----------------------------------------------------------------------+
-  | PCS extension <http://PCS.tekwire.net>                       |
+  | PCS extension <http://pcs.tekwire.net>                               |
   +----------------------------------------------------------------------+
   | Copyright (c) 2015 The PHP Group                                     |
   +----------------------------------------------------------------------+
@@ -15,14 +16,34 @@
   | Author: Francois Laupretre <francois@tekwire.net>                    |
   +----------------------------------------------------------------------+
 */
+//=============================================================================
 
-#ifndef __PCS_INFO_H
-#define __PCS_INFO_H
+namespace PCS\Embedded {
 
-/*============================================================================*/
+function build($ipath, $opath, $prefix=null)
+{
+	if (!class_exists('\PCS\Embedded\FileArray')) {
+		include(__DIR__.'/FileArray.php');
+	}
+	if (!class_exists('\PCS\Embedded\File')) {
+		include(__DIR__.'/File.php');
+	}
 
-static PHP_METHOD(PCS, fileCount);
-static PHP_METHOD(PCS, fileInfos);
+	#---
 
-/*============================================================================*/
-#endif
+	if (is_null($prefix)) {
+		$a=explode('.',basename($opath));
+		$prefix=$a[0];
+	}
+
+	$a=new \PCS\Embedded\FileArray();
+	
+	$a->register($ipath, '');
+
+	$output = $a->dump($prefix);
+	file_put_contents($opath, $output);
+}
+
+//=============================================================================
+}
+?>

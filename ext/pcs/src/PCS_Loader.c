@@ -33,7 +33,7 @@
    if throw arg is set, throws exception on error
 */
 
-static int PCS_Loader_loadNode(PCS_Node *node, int throw TSRMLS_DC)
+static int PCS_Loader_loadNode(PCS_Node *node, int throw)
 {
 	zend_file_handle file_handle;
 	zend_op_array *op_array;
@@ -57,8 +57,8 @@ static int PCS_Loader_loadNode(PCS_Node *node, int throw TSRMLS_DC)
 	file_handle.opened_path = NULL;
 	file_handle.free_filename = 0;
 
-	op_array = zend_compile_file(&file_handle, ZEND_REQUIRE TSRMLS_CC);
-	zend_destroy_file_handle(&file_handle TSRMLS_CC);
+	op_array = zend_compile_file(&file_handle, ZEND_REQUIRE);
+	zend_destroy_file_handle(&file_handle);
 	if (!op_array) {
 		if (throw) {
 			THROW_EXCEPTION_1("%s: Error compiling script - load aborted"
@@ -75,14 +75,14 @@ static int PCS_Loader_loadNode(PCS_Node *node, int throw TSRMLS_DC)
 		if (throw) {
 			THROW_EXCEPTION_1("%s: Script execution failure", ZSTR_VAL(node->uri));
 		}
-		destroy_op_array(op_array TSRMLS_CC);
+		destroy_op_array(op_array);
 		EFREE(op_array);
 		return FAILURE;
 	} zend_end_try();
 	EG(no_extensions)=0;
 
 	zval_ptr_dtor(&zret);
-	destroy_op_array(op_array TSRMLS_CC);
+	destroy_op_array(op_array);
 	EFREE(op_array);
 
 	return SUCCESS;
@@ -90,20 +90,22 @@ static int PCS_Loader_loadNode(PCS_Node *node, int throw TSRMLS_DC)
 
 /*===============================================================*/
 
-static zend_always_inline int RINIT_PCS_Loader(TSRMLS_D)
+static zend_always_inline int RINIT_PCS_Loader()
 {
-	PCS_Node *node;
-
-	/* Load scripts marked as PCS_LOAD_RINIT */
+	PCS_Node *node, **nodep;
+	int i;
 
 	DBG_MSG("Loading scripts marked as PCS_LOAD_AUTO");
-	ZEND_HASH_FOREACH_PTR(PCS_fileList, node) {
-		if (node->mode == PCS_LOAD_AUTO) {
-			if (PCS_Loader_loadNode(node, 1 TSRMLS_CC) == FAILURE) {
-				return FAILURE;
+	if (PCS_fileCount) {
+		for (i=0, nodep=PCS_fileList; i < PCS_fileCount ; i++, nodep++) {
+			node = (*nodep);
+			if (node->mode == PCS_LOAD_ALWAYS) {
+				if (PCS_Loader_loadNode(node, 1) == FAILURE) {
+					return FAILURE;
+				}
 			}
 		}
-	} ZEND_HASH_FOREACH_END();
+	}
 
 	return SUCCESS;
 }

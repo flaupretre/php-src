@@ -21,7 +21,7 @@
 
 /*---------------------------------------------------------------*/
 
-static int PCS_Loader_loadNode(PCS_Node *node, int throw TSRMLS_DC);
+static int PCS_Loader_loadNode(PCS_Node *node, int throw);
 
 /*============================================================================*/
 #endif

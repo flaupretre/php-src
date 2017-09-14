@@ -22,8 +22,8 @@ namespace PCS\Embedded {
 
 //----
 
-include(dirname(__FILE__).'/../pcs/raw/PCS/Embedded/FileArray.php');
-include(dirname(__FILE__).'/../pcs/raw/PCS/Embedded/File.php');
+include(dirname(__FILE__).'/../pcs/PCS/Embedded/FileArray.php');
+include(dirname(__FILE__).'/../pcs/PCS/Embedded/File.php');
 
 //----
 

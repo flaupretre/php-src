@@ -26,9 +26,18 @@
 
 /*============================================================================*/
 
+/*-- Load mode --*/
+
+#define PCS_LOAD_AUTO	0		/* Automatically detect PHP scripts */
+
+#define PCS_LOAD_ALWAYS	0x01	/* This code is always available */
+#define PCS_LOAD_NONE	0X02	/* PCS does not manage this code */
+
+/*-- */
+
 typedef void * PCS_ID;
 
-/* The structure contained in embedded '.phpc' files */
+/*-- The structure contained in embedded '.phpc' files */
 
 typedef struct {
 	int version;		/* Descriptor version (current: 0) */

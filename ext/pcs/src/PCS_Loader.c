@@ -99,7 +99,7 @@ static zend_always_inline int RINIT_PCS_Loader()
 	if (PCS_fileCount) {
 		for (i=0, nodep=PCS_fileList; i < PCS_fileCount ; i++, nodep++) {
 			node = (*nodep);
-			if (node->mode == PCS_LOAD_ALWAYS) {
+			if (node->flags & PCS_LOAD_ALWAYS) {
 				if (PCS_Loader_loadNode(node, 1) == FAILURE) {
 					return FAILURE;
 				}

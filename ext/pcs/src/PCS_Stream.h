@@ -50,9 +50,9 @@ static int PCS_Stream_fstat(php_stream *stream, php_stream_statbuf *ssb);
 static size_t PCS_Stream_readdir(php_stream *stream, char *buf, size_t count);
 static int PCS_Stream_seekdir(php_stream *stream, zend_off_t offset, int whence, zend_off_t *newoffset);
 static php_stream *PCS_Stream_generic_open(int dir, php_stream_wrapper *wrapper, const char *uri, const char *mode, int options, OPENED_PATH_PTR *opened_path, php_stream_context *context STREAMS_DC);
-static php_stream *PCS_Stream_openfile(php_stream_wrapper * wrapper, COMPAT_STREAM_CONST_DECL char *uri, COMPAT_STREAM_CONST_DECL char *mode, int options, OPENED_PATH_PTR *opened_path, php_stream_context *context STREAMS_DC);
-static int PCS_Stream_url_stat(php_stream_wrapper *wrapper, COMPAT_STREAM_CONST_DECL char *uri, int flags, php_stream_statbuf *ssb, php_stream_context *context);
-static php_stream *PCS_Stream_opendir(php_stream_wrapper * wrapper, COMPAT_STREAM_CONST_DECL char *uri, COMPAT_STREAM_CONST_DECL char *mode, int options, OPENED_PATH_PTR *opened_path, php_stream_context *context STREAMS_DC);
+static php_stream *PCS_Stream_openfile(php_stream_wrapper * wrapper, const char *uri, const char *mode, int options, OPENED_PATH_PTR *opened_path, php_stream_context *context STREAMS_DC);
+static int PCS_Stream_url_stat(php_stream_wrapper *wrapper, const char *uri, int flags, php_stream_statbuf *ssb, php_stream_context *context);
+static php_stream *PCS_Stream_opendir(php_stream_wrapper * wrapper, const char *uri, const char *mode, int options, OPENED_PATH_PTR *opened_path, php_stream_context *context STREAMS_DC);
 
 /*============================================================================*/
 #endif

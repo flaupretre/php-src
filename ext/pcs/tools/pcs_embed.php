@@ -22,8 +22,8 @@ namespace PCS\Embedded {
 
 //----
 
-include(dirname(__FILE__).'/../pcs/PCS/Embedded/FileArray.php');
-include(dirname(__FILE__).'/../pcs/PCS/Embedded/File.php');
+include(dirname(__FILE__).'/../pcs/php/PCS/Embedded/FileArray.php');
+include(dirname(__FILE__).'/../pcs/php/PCS/Embedded/File.php');
 
 //----
 
@@ -45,6 +45,7 @@ $a=new \PCS\Embedded\FileArray();
 $a->register($ipath, '');
 
 $output = $a->dump($prefix);
+echo "Writing phpc file ($opath)...\n";
 file_put_contents($opath, $output);
 
 //=============================================================================

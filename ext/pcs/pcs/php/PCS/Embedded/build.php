@@ -20,8 +20,10 @@
 
 namespace PCS\Embedded {
 
-function build($ipath, $opath, $prefix=null)
+function build($ipath=null, $opath=null, $prefix=null)
 {
+	global $argv;
+
 	if (!class_exists('\PCS\Embedded\FileArray')) {
 		include(__DIR__.'/FileArray.php');
 	}
@@ -31,6 +33,19 @@ function build($ipath, $opath, $prefix=null)
 
 	#---
 
+	$i=1;
+	if (is_null($ipath)  && isset($argv[$i])) $ipath=$argv[$i++];
+	if (is_null($opath)  && isset($argv[$i])) $opath=$argv[$i++];
+	if (is_null($prefix) && isset($argv[$i])) $prefix=$argv[$i++];
+
+	#---
+
+	if (is_null($ipath)) {
+		throw new \Exception("Input path not set");
+	}
+	if (is_null($opath)) {
+		throw new \Exception("Output path not set");
+	}
 	if (is_null($prefix)) {
 		$a=explode('.',basename($opath));
 		$prefix=$a[0];
@@ -41,6 +56,7 @@ function build($ipath, $opath, $prefix=null)
 	$a->register($ipath, '');
 
 	$output = $a->dump($prefix);
+	echo "Writing phpc file ($opath)...\n";
 	file_put_contents($opath, $output);
 }
 

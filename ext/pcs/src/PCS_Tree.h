@@ -30,13 +30,11 @@
 #define PCS_NODE_IS_FILE(np)	((np)->type == PCS_TYPE_FILE)
 
 /*-- Flags --*/
+/*-- For load modes, see pcs_client.h */
 
-#define PCS_FLAG_NOCHECK	0x01	/* Unpublished - avoids valgrind errors in debug mode */
+#define PCS_LOAD_MASK	0x03
 
-/*-- Load mode --*/
-
-#define PCS_LOAD_ALWAYS	0x01	/* This code is always available */
-#define PCS_LOAD_NONE	0X02	/* PCS does not manage this code */
+#define PCS_FLAG_NOCHECK	0x04	/* Unpublished - avoids valgrind errors in debug mode */
 
 /*---*/
 
@@ -48,7 +46,6 @@ struct _PCS_Node {
 	struct _PCS_Node *parent;
 	int type;
 	zend_ulong flags;
-	zend_ulong mode;
 	zend_string *path;
 	zend_string *uri;
 	union {

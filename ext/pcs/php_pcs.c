@@ -58,7 +58,7 @@
 /*------------------------*/
 /* Include embedded PHP code */
 
-#include "pcs.phpc"
+#include "pcs/phpc/pcs.phpc"
 
 /*------------------------*/
 
@@ -100,7 +100,7 @@ static PHP_MINFO_FUNCTION(pcs)
 	modes[0] = modes[1] = 0;
 	if (PCS_fileCount) {
 		for (i=0; i < PCS_fileCount ; i++) {
-			modes[PCS_fileList[i]->mode -1]++;
+			modes[(PCS_fileList[i]->flags & PCS_LOAD_MASK) -1]++;
 		}
 	}
 

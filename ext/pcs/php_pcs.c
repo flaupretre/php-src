@@ -58,8 +58,7 @@
 /*------------------------*/
 /* Include embedded PHP code */
 
-#include "auto.phpc"
-#include "raw.phpc"
+#include "pcs/phpc/pcs.phpc"
 
 /*------------------------*/
 
@@ -87,31 +86,33 @@ static PHP_MINFO_FUNCTION(pcs)
 {
 	char buf[10];
 	zend_ulong modes[2];
-	PCS_Node *node;
+	int i;
 
 	php_info_print_table_start();
 
 	php_info_print_table_row(2, "PHP Code Service", "enabled");
 	php_info_print_table_row(2, "Version", PHP_PCS_VERSION);
 
-	sprintf(buf, "%d", (int)zend_hash_num_elements(PCS_fileList));
+	sprintf(buf, "%d", PCS_fileCount);
 	php_info_print_table_row(2, "File count",buf);
 	php_info_print_table_end();
 
 	modes[0] = modes[1] = 0;
-	ZEND_HASH_FOREACH_PTR(PCS_fileList, node) {
-		modes [node->mode -1 ]++;
-	} ZEND_HASH_FOREACH_END();
+	if (PCS_fileCount) {
+		for (i=0; i < PCS_fileCount ; i++) {
+			modes[(PCS_fileList[i]->flags & PCS_LOAD_MASK) -1]++;
+		}
+	}
 
 	php_info_print_table_start();
 
 	php_info_print_table_colspan_header(2, "Mode");
 
-	sprintf(buf, "%lu", modes[PCS_LOAD_AUTO -1]);
-	php_info_print_table_row(2, "Auto",buf);
+	sprintf(buf, "%lu", modes[PCS_LOAD_ALWAYS -1]);
+	php_info_print_table_row(2, "Always",buf);
 
 	sprintf(buf, "%lu", modes[PCS_LOAD_NONE -1]);
-	php_info_print_table_row(2, "Raw",buf);
+	php_info_print_table_row(2, "",buf);
 
 	php_info_print_table_end();
 }
@@ -124,7 +125,7 @@ static PHP_RINIT_FUNCTION(pcs)
 	
 	in_startup = 0;
 
-	if (RINIT_PCS_Loader(TSRMLS_C) == FAILURE) return FAILURE;
+	if (RINIT_PCS_Loader() == FAILURE) return FAILURE;
 
 	DBG_MSG("<- PCS RINIT");
 	return SUCCESS;
@@ -141,24 +142,18 @@ static PHP_RSHUTDOWN_FUNCTION(pcs)
 
 static PHP_MINIT_FUNCTION(pcs)
 {
-	zend_class_entry ce;
-
 	DBG_INIT();
 	DBG_MSG("-> PCS MINIT");
 
-	if (MINIT_PCS_Tree(TSRMLS_C) == FAILURE) return FAILURE;
+	if (MINIT_PCS_Tree() == FAILURE) return FAILURE;
 
-	if (MINIT_PCS_Class(TSRMLS_C) == FAILURE) return FAILURE;
+	if (MINIT_PCS_Class() == FAILURE) return FAILURE;
 
-	if (MINIT_PCS_Stream(TSRMLS_C) == FAILURE) return FAILURE;
+	if (MINIT_PCS_Stream() == FAILURE) return FAILURE;
 
 	/* Register PHP code */
 
-	if (PCS_registerEmbedded(auto_pcs_code, IMM_STRL("ext/pcs"), 0, 0) == FAILURE) {
-		return FAILURE;
-	}
-
-	if (PCS_registerEmbedded(raw_pcs_code, IMM_STRL("ext/pcs"), 0, PCS_LOAD_NONE) == FAILURE) {
+	if (PCS_registerEmbedded(pcs_pcs_code, IMM_STRL("ext/pcs"), 0) == FAILURE) {
 		return FAILURE;
 	}
 
@@ -170,9 +165,9 @@ static PHP_MINIT_FUNCTION(pcs)
 
 static PHP_MSHUTDOWN_FUNCTION(pcs)
 {
-	if (MSHUTDOWN_PCS_Stream(TSRMLS_C) == FAILURE) return FAILURE;
+	if (MSHUTDOWN_PCS_Stream() == FAILURE) return FAILURE;
 
-	if (MSHUTDOWN_PCS_Tree(TSRMLS_C) == FAILURE) return FAILURE;
+	if (MSHUTDOWN_PCS_Tree() == FAILURE) return FAILURE;
 
 	return SUCCESS;
 }

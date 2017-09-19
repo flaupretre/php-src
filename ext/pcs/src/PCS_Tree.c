@@ -44,7 +44,7 @@ static PCS_Node *PCS_Tree_addSubNode(PCS_Node *parent, const char *name
 		php_error(E_CORE_ERROR, "Cannot create node named '.' or '..'");
 		return NULL;
 	}
-	
+
 	/* Check if entry already exists */
 
 	if (parent) {
@@ -78,7 +78,6 @@ static PCS_Node *PCS_Tree_addSubNode(PCS_Node *parent, const char *name
 	node->parent = parent;
 	node->type = type;
 	node->flags = flags;
-	node->mode = 0;
 
 	if (parent) {
 		node->path = zend_string_alloc(ZSTR_LEN(parent->path) + 1 + len, 1);
@@ -120,8 +119,8 @@ static PCS_Node *PCS_Tree_addSubNode(PCS_Node *parent, const char *name
 			break;
 
 		case PCS_TYPE_FILE:
-			node->u.f.id = zend_hash_next_free_element(PCS_fileList);
-			zend_hash_next_index_insert_ptr(PCS_fileList, node);
+			PALLOCATE(PCS_fileList, (++PCS_fileCount)*sizeof(*PCS_fileList));
+			PCS_fileList[PCS_fileCount - 1] = node;
 			break;
 	}
 
@@ -167,7 +166,7 @@ static PCS_Node *PCS_Tree_addDir(const char *path, size_t path_len, zend_ulong f
 /*--------------------*/
 
 static PCS_Node *PCS_Tree_addFile(const char *path, size_t path_len
-	, char *data, size_t datalen, int alloc, zend_ulong flags, zend_ulong mode)
+	, char *data, size_t datalen, int alloc, zend_ulong flags)
 {
 	PCS_Node *node;
 
@@ -177,21 +176,52 @@ static PCS_Node *PCS_Tree_addFile(const char *path, size_t path_len
 	node->u.f.data = data;
 	node->u.f.len = datalen;
 	node->u.f.alloc = alloc;
+	
+	if ((flags & PCS_LOAD_MASK) == PCS_LOAD_AUTO) {
+		flags = (flags & (~PCS_LOAD_MASK)) | PCS_Tree_computeMode(data, datalen, flags);
+	}
+	node->flags = flags;
 
-	if (!mode) {
-		mode = PCS_LOAD_AUTO;
-		if ((datalen < 5)
-			|| (data[0] != '<')
-			|| (data[1] != '?')
-			|| (data[2] != 'p')
-			|| (data[3] != 'h')
-			|| (data[4] != 'p')) {
+	return node;
+}
+
+/*--------------------*/
+/* Code is always active unless the file contains a line saying '//PCS:LOAD=FALSE'.
+   In this case, the file content is never compiled nor executed by PCS. */
+
+static zend_ulong PCS_Tree_computeMode(char *data, size_t datalen, zend_ulong flags)
+{
+	zend_ulong mode;
+	const char *pos, *pos2, *p, *end;
+
+	if ((datalen < 5)
+		|| (data[0] != '<')
+		|| (data[1] != '?')
+		|| (data[2] != 'p')
+		|| (data[3] != 'h')
+		|| (data[4] != 'p')) {
+		return PCS_LOAD_NONE;
+	}
+
+	mode = PCS_LOAD_ALWAYS;
+	end = data + datalen;
+	if ((pos = php_memnstr(data, "//PCS:LOAD=", 11, end)) != NULL) {
+		pos += 11;
+		p = pos;
+		pos2 = NULL;
+		while (p <= end) {
+			if (((*p) == '\n') || ((*p) == '\r') || ((*p) == '\t') || ((*p) == ' ')) {
+				pos2 = p;
+				break;
+			}
+			p++;
+		}
+		if ((pos2) && (!strncmp(pos, "FALSE", pos2 - pos))) {
 			mode = PCS_LOAD_NONE;
 		}
 	}
-	node->mode=mode;
 
-	return node;
+	return mode;
 }
 
 /*--------------------*/
@@ -200,12 +230,8 @@ static void PCS_Tree_destroyNode(zval *zp)
 {
 	PCS_Node **nodep, *node;
 
-	nodep = (PCS_Node **)COMPAT_HASH_PTR(zp);
+	nodep = (PCS_Node **)(&(Z_PTR_P(zp)));
 	node = *nodep;
-
-	DBG_MSG1("-> PCS_Tree_destroyNode: ZURI=%x",node->uri);
-	DBG_MSG1("-> PCS_Tree_destroyNode: URI=%x",ZSTR_VAL(node->uri));
-	DBG_MSG1("-> PCS_Tree_destroyNode(%s)",ZSTR_VAL(node->uri));
 
 #if ZEND_DEBUG
 	node->flags |= PCS_FLAG_NOCHECK; /* Checks will fail during tree destruction */
@@ -223,7 +249,6 @@ static void PCS_Tree_destroyNode(zval *zp)
 	}
 
 	PFREE(*nodep); /* Security: free and set null ptr */
-	DBG_MSG("<- PCS_Tree_destroyNode");
 }
 
 /*--------------------*/
@@ -270,7 +295,7 @@ static zend_string *PCS_Tree_cleanPath(const char *path, size_t len)
 
 /*--------------------*/
 /* Resolve a path not existing in PCS_pathList
-   On entry, path is 'clean', ie produced by PCS_Tree_cleanPath()
+   On entry, path must be 'clean', ie produced by PCS_Tree_cleanPath()
    Handles '.' and '..' special dir entries
    Returns NULL if node does not exist
 */
@@ -281,8 +306,6 @@ static PCS_Node *PCS_Tree_resolvePath(zend_string *path)
 	size_t remaining, len;
 	char *start, *end;
 
-	DBG_MSG1("-> PCS_Tree_resolvePath(%s)", ZSTR_VAL(path));
-
 	node = PCS_root;
 	start = ZSTR_VAL(path);
 	while (1) {
@@ -290,7 +313,7 @@ static PCS_Node *PCS_Tree_resolvePath(zend_string *path)
 		end = memchr(start, '/', remaining);
 		len = (end ? (size_t)(end - start) : remaining);
 		if ((len == 2) && (start[0] == '.') && (start[1] == '.')) {
-			if (node->parent) {
+			if (node->parent) { /* Root node is its own parent */
 				node = node->parent;
 			}
 		} else if ((len != 1) || (start[0] != '.')) {
@@ -302,7 +325,6 @@ static PCS_Node *PCS_Tree_resolvePath(zend_string *path)
 		if (! PCS_NODE_IS_DIR(node)) return NULL;
 		start = end + 1;
 	}
-	DBG_MSG("<- PCS_Tree_resolvePath()");
 	return node;
 }
 
@@ -313,8 +335,6 @@ static PCS_Node *PCS_Tree_getNodeFromPath(const char *path, size_t len)
 {
 	zend_string *cpath, *pcpath;
 	PCS_Node *node;
-
-	DBG_MSG1("-> PCS_Tree_getNodeFromPath(%s)", path);
 
 	cpath = PCS_Tree_cleanPath(path, len);
 
@@ -340,23 +360,14 @@ static PCS_Node *PCS_Tree_getNodeFromPath(const char *path, size_t len)
 
 /*--------------------*/
 
-static PCS_Node *PCS_Tree_getNodeFromID(PCS_ID id)
-{
-	return zend_hash_index_find_ptr(PCS_fileList, (zend_ulong)id);
-}
-
-/*--------------------*/
-
 static char PCS_Tree_LoadModeToDisplay(const PCS_Node *node)
 {
-	char *modes="!A-";
-
-	return modes[node->mode & PCS_LOAD_MASK];
+	return ((node->flags & PCS_LOAD_ALWAYS) ? '*' : '-');
 }
 
 /*===============================================================*/
 
-static zend_always_inline int MINIT_PCS_Tree(TSRMLS_D)
+static zend_always_inline int MINIT_PCS_Tree()
 {
 	/* Init path list */
 	/* No destructor because PCS_Node structs are destroyed with the tree */
@@ -367,8 +378,8 @@ static zend_always_inline int MINIT_PCS_Tree(TSRMLS_D)
 
 	/* Init file list */
 
-	PCS_fileList = ut_pallocate(NULL, sizeof(*PCS_fileList));
-	zend_hash_init(PCS_fileList, 32, 0, NULL, 1);
+	PCS_fileList = NULL;
+	PCS_fileCount = 0;
 
 	/* Create PCS_root node */
 
@@ -379,7 +390,7 @@ static zend_always_inline int MINIT_PCS_Tree(TSRMLS_D)
 
 /*---------------------------------------------------------------*/
 
-static zend_always_inline int MSHUTDOWN_PCS_Tree(TSRMLS_D)
+static zend_always_inline int MSHUTDOWN_PCS_Tree()
 {
 	zval zv;
 
@@ -391,7 +402,7 @@ static zend_always_inline int MSHUTDOWN_PCS_Tree(TSRMLS_D)
 
 	/* Free file list */
 
-	zend_hash_destroy(PCS_fileList);
+	PCS_fileCount=0;
 	PFREE(PCS_fileList);
 
 	/* Destroy tree */
@@ -399,7 +410,7 @@ static zend_always_inline int MSHUTDOWN_PCS_Tree(TSRMLS_D)
 	ZVAL_PTR(&zv, PCS_root);
 	PCS_Tree_destroyNode(&zv);
 	PCS_root = NULL;
-	
+
 	return SUCCESS;
 }
 
